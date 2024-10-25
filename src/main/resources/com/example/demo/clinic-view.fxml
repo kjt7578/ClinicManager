@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox alignment="CENTER" prefHeight="357.0" prefWidth="461.0" spacing="20.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.demo.ClinicManagerController">
+<VBox alignment="CENTER" prefHeight="325.0" prefWidth="461.0" spacing="20.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.demo.ClinicManagerController">
   <padding>
     <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
   </padding>
@@ -21,15 +21,17 @@
      <tabs>
        <Tab fx:id="office_appointments" text="Office Appointments">
          <content>
-           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="535.0" prefWidth="417.0">
+           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="329.0" prefWidth="421.0">
                   <children>
-                     <TextField fx:id="patient_name" layoutX="14.0" layoutY="14.0" promptText="Enter Patient Name" />
-                     <DatePicker fx:id="date_of_birth" layoutX="209.0" layoutY="14.0" promptText="Date Of Birth" />
-                     <RadioButton layoutX="21.0" layoutY="94.0" mnemonicParsing="false" text="Schedule" />
-                     <RadioButton layoutX="21.0" layoutY="123.0" mnemonicParsing="false" text="Reschedule" />
-                     <RadioButton layoutX="21.0" layoutY="154.0" mnemonicParsing="false" text="Cancel" />
-                     <TextArea fx:id="status_messages" editable="false" layoutX="211.0" layoutY="63.0" prefHeight="200.0" prefWidth="184.0" promptText="Status message" />
-                     <Button fx:id="sub_button" layoutX="8.0" layoutY="239.0" mnemonicParsing="false" text="Submit" />
+                     <TextField fx:id="patient_first_name" layoutX="14.0" layoutY="63.0" promptText="Enter Patient First Name" />
+                     <DatePicker fx:id="date_of_birth" layoutX="15.0" layoutY="134.0" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" />
+                     <TextArea fx:id="status_messages" editable="false" layoutX="211.0" layoutY="22.0" prefHeight="179.0" prefWidth="184.0" promptText="Status message" />
+                     <Button fx:id="schedule_button" layoutX="225.0" layoutY="210.0" mnemonicParsing="false" text="Schedule" />
+                     <TextField fx:id="patient_last_name" layoutX="14.0" layoutY="100.0" promptText="Enter Patient Last Name" />
+                     <Button fx:id="cencel_button11" layoutX="318.0" layoutY="210.0" mnemonicParsing="false" text="Cancel" />
+                     <DatePicker fx:id="appointment_date" layoutX="15.0" layoutY="23.0" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date" />
+                     <ComboBox fx:id="timeslot_selector1" layoutX="17.0" layoutY="169.0" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" />
+                     <ComboBox fx:id="provider_selector11" layoutX="17.0" layoutY="208.0" prefHeight="26.0" prefWidth="156.0" promptText="Provider" />
                   </children>
                </AnchorPane>
          </content>
@@ -63,5 +65,5 @@
          </Tab>
      </tabs>
    </TabPane>
-   <BorderPane prefHeight="200.0" prefWidth="200.0" />
+   <BorderPane prefHeight="21.0" prefWidth="421.0" />
 </VBox>
