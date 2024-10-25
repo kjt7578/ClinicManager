@@ -135,4 +135,8 @@ public class Appointment implements Comparable<Appointment> {
                 patient.toString(),
                 providerInfo);
     }
+
+    public void setTimeslot(Timeslot newSlot) {
+
+    }
 }

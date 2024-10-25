@@ -4,7 +4,6 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
-<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextArea?>
@@ -13,22 +12,22 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox alignment="CENTER" prefHeight="367.0" prefWidth="461.0" spacing="20.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.demo.ClinicManagerController">
+<VBox alignment="CENTER" prefHeight="405.0" prefWidth="741.0" spacing="20.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.demo.ClinicManagerController">
   <padding>
     <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
   </padding>
    <TabPane prefHeight="563.0" prefWidth="417.0" tabClosingPolicy="UNAVAILABLE">
      <tabs>
-       <Tab fx:id="office_appointments" text="Appointments">
+       <Tab fx:id="appointments" text="Appointments">
          <content>
-           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="329.0" prefWidth="421.0">
+           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="316.0" prefWidth="551.0">
                   <children>
                      <TextField fx:id="patient_first_name" layoutX="15.0" layoutY="101.0" promptText="Enter Patient First Name" />
                      <DatePicker fx:id="date_of_birth" layoutX="17.0" layoutY="169.0" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" />
-                     <TextArea fx:id="status_messages" editable="false" layoutX="211.0" layoutY="22.0" prefHeight="212.0" prefWidth="184.0" promptText="Status message" />
-                     <Button fx:id="schedule_button" layoutX="222.0" layoutY="246.0" mnemonicParsing="false" text="Schedule" />
+                     <TextArea fx:id="status_messages" editable="false" layoutX="211.0" layoutY="22.0" prefHeight="212.0" prefWidth="474.0" promptText="Status message" />
+                     <Button fx:id="schedule_button" layoutX="221.0" layoutY="259.0" mnemonicParsing="false" text="Schedule" />
                      <TextField fx:id="patient_last_name" layoutX="16.0" layoutY="135.0" promptText="Enter Patient Last Name" />
-                     <Button fx:id="cencel_button11" layoutX="322.0" layoutY="246.0" mnemonicParsing="false" text="Cancel" />
+                     <Button fx:id="cencel_button11" layoutX="325.0" layoutY="259.0" mnemonicParsing="false" text="Cancel" />
                      <DatePicker fx:id="appointment_date" layoutX="16.0" layoutY="65.0" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date" />
                      <ComboBox fx:id="timeslot_selection" layoutX="18.0" layoutY="208.0" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" />
                      <ComboBox fx:id="provider_selection" layoutX="18.0" layoutY="244.0" prefHeight="26.0" prefWidth="156.0" promptText="Provider" />
@@ -37,19 +36,20 @@
                </AnchorPane>
          </content>
        </Tab>
-         <Tab fx:id="imaging_appointments1" text="Reschedule">
+         <Tab fx:id="reschedule" text="Reschedule">
             <content>
-               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="535.0" prefWidth="417.0">
+               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="329.0" prefWidth="421.0">
                   <children>
-                     <TextField fx:id="patient_name1" layoutX="14.0" layoutY="14.0" promptText="Enter Patient Name" />
-                     <DatePicker fx:id="date_of_birth1" layoutX="209.0" layoutY="14.0" promptText="Date Of Birth" />
-                     <RadioButton layoutX="20.0" layoutY="52.0" mnemonicParsing="false" text="Schedule" />
-                     <RadioButton layoutX="20.0" layoutY="81.0" mnemonicParsing="false" text="Reschedule" />
-                     <RadioButton layoutX="20.0" layoutY="112.0" mnemonicParsing="false" text="Cancel" />
-                     <TextArea fx:id="status_messages1" editable="false" layoutX="209.0" layoutY="106.0" prefHeight="156.0" prefWidth="205.0" promptText="Status message" />
-                     <ComboBox fx:id="myComboBox" layoutX="19.0" layoutY="151.0" prefWidth="150.0" promptText="Select a service" />
-                     <Button fx:id="submit_button" layoutX="8.0" layoutY="239.0" mnemonicParsing="false" text="Submit" />
-                     <DatePicker layoutX="209.0" layoutY="52.0" promptText="Select Appointment Date" />
+                     <TextField fx:id="patient_first_name1" layoutX="15.0" layoutY="101.0" promptText="Enter Patient First Name" />
+                     <DatePicker fx:id="date_of_birth2" layoutX="17.0" layoutY="169.0" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" />
+                     <TextArea fx:id="status_messages2" editable="false" layoutX="211.0" layoutY="22.0" prefHeight="212.0" prefWidth="473.0" promptText="Status message" />
+                     <Button fx:id="reschedule_button1" layoutX="265.0" layoutY="259.0" mnemonicParsing="false" text="Reschedule" />
+                     <TextField fx:id="patient_last_name1" layoutX="16.0" layoutY="135.0" promptText="Enter Patient Last Name" />
+                     <DatePicker fx:id="appointment_date1" layoutX="16.0" layoutY="65.0" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date" />
+                     <ComboBox fx:id="timeslot_selection1" layoutX="18.0" layoutY="208.0" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" />
+                     <ComboBox fx:id="provider_selection1" layoutX="18.0" layoutY="244.0" prefHeight="26.0" prefWidth="156.0" promptText="Provider" />
+                     <ComboBox fx:id="appointment_type1" layoutX="18.0" layoutY="22.0" prefHeight="26.0" prefWidth="156.0" promptText="       Office / Imaging" />
+                     <ComboBox fx:id="newtimeslot_selection" layoutX="18.0" layoutY="285.0" prefHeight="26.0" prefWidth="156.0" promptText="New Timeslot" />
                   </children>
                </AnchorPane>
             </content>
