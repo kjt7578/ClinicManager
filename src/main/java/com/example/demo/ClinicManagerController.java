@@ -1,31 +1,43 @@
 package com.example.demo;
 
-import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.ComboBox;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.control.TextArea;
 import model.project1.*;
 import model.util.Doctor;
 import model.util.Technician;
+import model.util.Person;
+import model.project1.List;
+import model.project1.Appointment;
+import model.project1.Patient;
+import model.project1.Profile;
+import model.project1.Timeslot;
 
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.time.LocalDate;
 import java.util.Scanner;
 
 public class ClinicManagerController {
-    @FXML
-    private Label welcomeText;
+
 
     @FXML
-    private ComboBox<String> display_selector;
+    private TextField patient_first_name;
+
+    @FXML
+    private TextField patient_last_name;
+
+    @FXML
+    private DatePicker appointment_date;
+
+    @FXML
+    private DatePicker date_of_birth;
 
     @FXML
     private ComboBox<String> timeslot_selection;
-
-    @FXML
-    private ComboBox<String> appointment_type;
 
     @FXML
     private ComboBox<String> provider_selection;
@@ -33,8 +45,21 @@ public class ClinicManagerController {
     @FXML
     private TextArea status_messages;
 
+    @FXML
+    private Button schedule_button;
+
+    @FXML
+    private Label welcomeText;
+
+    @FXML
+    private ComboBox<String> display_selector;
+
+    @FXML
+    private ComboBox<String> appointment_type;
+
     private ObservableList<String> providerList;
     private static final String PROVIDERS_FILE_PATH = "providers.txt";
+    private List<Appointment> appointmentList;
 
     @FXML
     public void initialize() {
@@ -54,6 +79,7 @@ public class ClinicManagerController {
             System.out.println("Selected: " + selectedOption);
         });
 
+        appointmentList = new List<>();
         initializeTimeSlots();
     }
 
@@ -122,4 +148,87 @@ public class ClinicManagerController {
         }
     }
 
+    @FXML
+    private void handleSchedule(javafx.event.ActionEvent event) {
+        String firstName = patient_first_name.getText();
+        String lastName = patient_last_name.getText();
+        LocalDate appointmentDate = appointment_date.getValue();
+        String timeslotStr = timeslot_selection.getValue();
+        String providerName = provider_selection.getValue();
+        LocalDate dob = date_of_birth.getValue();
+
+        if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
+                appointmentDate == null || timeslotStr == null || providerName == null || dob == null) {
+            status_messages.setText("Fill all fields");
+            return;
+        }
+
+        if (isDuplicateAppointment(firstName, lastName, dob, appointmentDate, timeslotStr)) {
+            status_messages.setText("Appointment already exist.");
+            return;
+        }
+
+        // 4. 예약 생성
+        try {
+            createNewAppointment(firstName, lastName, dob, appointmentDate, timeslotStr, providerName);
+            status_messages.setText("TEST");
+            status_messages.setText(firstName + appointmentDate + "Success.");
+            clearFields();
+        } catch (Exception e) {
+            status_messages.setText("Error!.");
+        }
+    }
+
+    private boolean isDuplicateAppointment(String firstName, String lastName, LocalDate dob, LocalDate appointmentDate, String timeslot) {
+        for (int i = 0; i < appointmentList.size(); i++) {
+            Appointment appointment = appointmentList.get(i);
+            Person person = appointment.getPatient();
+
+            if (person instanceof Patient) {
+                Patient patient = (Patient) person;
+
+                if (appointment.getDate().equals(appointmentDate) &&
+                        appointment.getTimeslot().toString().equals(timeslot) &&
+                        patient.getProfile().getFname().equalsIgnoreCase(firstName) &&
+                        patient.getProfile().getLname().equalsIgnoreCase(lastName) &&
+                        patient.getProfile().getDob().equals(dob)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void createNewAppointment(String firstName, String lastName, LocalDate dob, LocalDate appointmentDate, String timeslot, String provider) {
+        try {
+            Date dateOfBirth = new Date(dob.getYear(), dob.getMonthValue(), dob.getDayOfMonth());
+            Date appointmentDateConverted = new Date(appointmentDate.getYear(), appointmentDate.getMonthValue(), appointmentDate.getDayOfMonth());
+
+            Patient newPatient = new Patient(new Profile(firstName, lastName, dateOfBirth));
+
+            Doctor selectedDoctor = findDoctorByName(provider);
+            if (selectedDoctor == null) {
+                status_messages.setText("Doctor Does not exist.");
+                return;
+            }
+
+            Appointment newAppointment = new Appointment(appointmentDateConverted, Timeslot.fromString(timeslot), newPatient, selectedDoctor);
+            appointmentList.add(newAppointment);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Doctor findDoctorByName(String providerName) {
+        return null;
+    }
+
+    private void clearFields() {
+        patient_first_name.clear();
+        patient_last_name.clear();
+        appointment_date.setValue(null);
+        timeslot_selection.setValue(null);
+        provider_selection.setValue(null);
+        status_messages.clear();
+    }
 }

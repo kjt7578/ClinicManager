@@ -25,7 +25,7 @@
                      <TextField fx:id="patient_first_name" layoutX="15.0" layoutY="101.0" promptText="Enter Patient First Name" />
                      <DatePicker fx:id="date_of_birth" layoutX="17.0" layoutY="169.0" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" />
                      <TextArea fx:id="status_messages" editable="false" layoutX="211.0" layoutY="22.0" prefHeight="212.0" prefWidth="474.0" promptText="Status message" />
-                     <Button fx:id="schedule_button" layoutX="221.0" layoutY="259.0" mnemonicParsing="false" text="Schedule" />
+                      <Button fx:id="schedule_button" layoutX="221.0" layoutY="259.0" mnemonicParsing="false" text="Schedule" onAction="#handleSchedule" />
                      <TextField fx:id="patient_last_name" layoutX="16.0" layoutY="135.0" promptText="Enter Patient Last Name" />
                      <Button fx:id="cencel_button11" layoutX="325.0" layoutY="259.0" mnemonicParsing="false" text="Cancel" />
                      <DatePicker fx:id="appointment_date" layoutX="16.0" layoutY="65.0" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date" />
