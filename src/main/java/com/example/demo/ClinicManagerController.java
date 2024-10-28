@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import javafx.application.Platform;
 import model.project1.*;
 import model.util.Doctor;
 import model.util.Technician;
@@ -15,14 +16,12 @@ import javafx.scene.control.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDate;
 import java.util.Scanner;
 
 public class ClinicManagerController {
-
 
     @FXML
     private TextField patient_first_name;
@@ -98,26 +97,47 @@ public class ClinicManagerController {
             provider_selection.setItems(providerList);
             displayProviders();
         } catch (FileNotFoundException e) {
-            status_messages.setText("Error: " + PROVIDERS_FILE_PATH + " Cannot find providers.txt!");
+            appendMessage("Error: " + PROVIDERS_FILE_PATH + " Cannot find providers.txt!");
         }
     }
 
     private Provider parseProvider(String line) {
         String[] tokens = line.split("\\s+");
+
+        if (tokens.length < 6) {
+            status_messages.appendText("Error: Invalid provider data format.\n");
+            return null;
+        }
+
         String providerType = tokens[0].toUpperCase();
         String firstName = tokens[1];
         String lastName = tokens[2];
         String[] dateParts = tokens[3].split("/");
+
+        if (dateParts.length != 3) {
+            status_messages.appendText("Error: Invalid date format.\n");
+            return null;
+        }
+
         Date dateOfBirth = new Date(
                 Integer.parseInt(dateParts[2]),
                 Integer.parseInt(dateParts[0]),
                 Integer.parseInt(dateParts[1]));
+
         Location location = Location.valueOf(tokens[4].toUpperCase());
 
         if (providerType.equals("D")) {
+            if (tokens.length < 7) {
+                status_messages.appendText("Error: Invalid doctor data format.\n");
+                return null;
+            }
             return new Doctor(new Profile(firstName, lastName, dateOfBirth), location,
                     Specialty.valueOf(tokens[5].toUpperCase()), tokens[6]);
         } else if (providerType.equals("T")) {
+            if (tokens.length < 6) {
+                status_messages.appendText("Error: Invalid technician data format.\n");
+                return null;
+            }
             return new Technician(new Profile(firstName, lastName, dateOfBirth), location,
                     Integer.parseInt(tokens[5]));
         }
@@ -129,15 +149,13 @@ public class ClinicManagerController {
         for (String provider : providerList) {
             sb.append(provider).append("\n");
         }
-        status_messages.setText(sb.toString());
+        appendMessage(sb.toString());
     }
 
     private void initializeTimeSlots() {
         ObservableList<String> timeSlots = FXCollections.observableArrayList();
-        // 9:00AM ~ 11:30AM Morning slots from index 1 to 6
-        addTimeSlots(timeSlots, 1, 6);
-        // 2:00PM ~ 5:00PM Afternoon slots from index 7 to 12
-        addTimeSlots(timeSlots, 7, 12);
+        addTimeSlots(timeSlots, 1, 6); // Morning slots
+        addTimeSlots(timeSlots, 7, 12); // Afternoon slots
         timeslot_selection.setItems(timeSlots);
     }
 
@@ -157,26 +175,33 @@ public class ClinicManagerController {
         String providerName = provider_selection.getValue();
         LocalDate dob = date_of_birth.getValue();
 
+        System.out.println(firstName + " " + lastName + " " + appointmentDate + " " + timeslotStr + " " + providerName + " " + dob);
+
         if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
                 appointmentDate == null || timeslotStr == null || providerName == null || dob == null) {
-            status_messages.setText("Fill all fields");
+            appendMessage("Fill all fields");
+            System.out.println("Empty field exists");
             return;
         }
 
         if (isDuplicateAppointment(firstName, lastName, dob, appointmentDate, timeslotStr)) {
-            status_messages.setText("Appointment already exist.");
+            appendMessage("Appointment already exists.");
+            System.out.println("Appointment already exists.");
             return;
         }
 
-        // 4. 예약 생성
         try {
             createNewAppointment(firstName, lastName, dob, appointmentDate, timeslotStr, providerName);
-            status_messages.setText("TEST");
-            status_messages.setText(firstName + appointmentDate + "Success.");
+            Platform.runLater(() -> {
+                appendMessage(firstName + " " + appointmentDate + " Success.");
+            });
+            System.out.println("Success");
             clearFields();
         } catch (Exception e) {
-            status_messages.setText("Error!.");
+            appendMessage("Error.");
+            System.out.println("Error");
         }
+        System.out.println("handleSchedule Done");
     }
 
     private boolean isDuplicateAppointment(String firstName, String lastName, LocalDate dob, LocalDate appointmentDate, String timeslot) {
@@ -203,25 +228,56 @@ public class ClinicManagerController {
         try {
             Date dateOfBirth = new Date(dob.getYear(), dob.getMonthValue(), dob.getDayOfMonth());
             Date appointmentDateConverted = new Date(appointmentDate.getYear(), appointmentDate.getMonthValue(), appointmentDate.getDayOfMonth());
-
             Patient newPatient = new Patient(new Profile(firstName, lastName, dateOfBirth));
 
             Doctor selectedDoctor = findDoctorByName(provider);
             if (selectedDoctor == null) {
-                status_messages.setText("Doctor Does not exist.");
+                appendMessage("Doctor does not exist.");
                 return;
             }
 
             Appointment newAppointment = new Appointment(appointmentDateConverted, Timeslot.fromString(timeslot), newPatient, selectedDoctor);
             appointmentList.add(newAppointment);
+
+            appendMessage("Appointment successfully created for " + firstName + " on " + appointmentDate);
+            System.out.println("Appointment successfully created for " + firstName + " on " + appointmentDate);
         } catch (Exception e) {
             e.printStackTrace();
+            appendMessage("Error while creating appointment.");
         }
     }
 
     private Doctor findDoctorByName(String providerName) {
+        String[] providerParts = providerName.split(" ");
+        if (providerParts.length < 2) {
+            return null;
+        }
+
+        String firstName = providerParts[0];
+        String lastName = providerParts[1];
+
+        for (String providerInfo : providerList) {
+            String[] providerDetails = providerInfo.split(" ");
+            if (providerDetails.length < 2) {
+                continue;
+            }
+
+            String providerFirstName = providerDetails[0];
+            String providerLastName = providerDetails[1];
+
+            if (firstName.equalsIgnoreCase(providerFirstName) && lastName.equalsIgnoreCase(providerLastName)) {
+                for (int i = 0; i < providerList.size(); i++) {
+                    Provider provider = parseProvider(providerList.get(i));
+                    if (provider instanceof Doctor) {
+                        return (Doctor) provider;
+                    }
+                }
+            }
+        }
+
         return null;
     }
+
 
     private void clearFields() {
         patient_first_name.clear();
@@ -229,6 +285,11 @@ public class ClinicManagerController {
         appointment_date.setValue(null);
         timeslot_selection.setValue(null);
         provider_selection.setValue(null);
-        status_messages.clear();
+    }
+
+    private void appendMessage(String message) {
+        Platform.runLater(() -> {
+            status_messages.appendText(message + "\n");
+        });
     }
 }
