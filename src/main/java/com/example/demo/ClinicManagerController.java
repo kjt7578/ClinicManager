@@ -19,42 +19,49 @@ import javafx.collections.ObservableList;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class ClinicManagerController {
 
     @FXML
-    private TextField patient_first_name;
+    private TextField office_patient_first_name;
 
     @FXML
-    private TextField patient_last_name;
+    private TextField office_patient_last_name;
 
     @FXML
-    private DatePicker appointment_date;
+    private DatePicker office_appointment_date;
 
     @FXML
-    private DatePicker date_of_birth;
+    private DatePicker office_date_of_birth;
 
     @FXML
-    private ComboBox<String> timeslot_selection;
+    private ComboBox<String> office_timeslot_selection;
 
     @FXML
-    private ComboBox<String> provider_selection;
+    private ComboBox<String> office_provider_selection;
 
     @FXML
     private TextArea status_messages;
 
     @FXML
-    private Button schedule_button;
+    private TextField imaging_patient_first_name;
 
     @FXML
-    private Label welcomeText;
+    private TextField imaging_patient_last_name;
 
     @FXML
-    private ComboBox<String> display_selector;
+    private DatePicker imaging_appointment_date;
 
     @FXML
-    private ComboBox<String> appointment_type;
+    private DatePicker imaging_date_of_birth;
+
+    @FXML
+    private ComboBox<String> imaging_timeslot_selection;
+
+    @FXML
+    private ComboBox<String> imaging_provider_selection;
 
     private ObservableList<String> providerList;
     private static final String PROVIDERS_FILE_PATH = "providers.txt";
@@ -64,20 +71,6 @@ public class ClinicManagerController {
     public void initialize() {
         providerList = FXCollections.observableArrayList();
         loadProviders();
-
-        display_selector.getItems().addAll("Display office appointments", "Display imaging appointments", "Display all appointments by date", "Display all appointments by patient", "Display all appointments by county", "Display billing statements for all patients", "Display all credit amounts for providers");
-        appointment_type.getItems().addAll("Office", "Imaging");
-
-        appointment_type.setOnAction(e -> {
-            String selectedType = appointment_type.getValue();
-            System.out.println("Selected: " + selectedType);
-        });
-
-        display_selector.setOnAction(e -> {
-            String selectedOption = display_selector.getValue();
-            System.out.println("Selected: " + selectedOption);
-        });
-
         appointmentList = new List<>();
         initializeTimeSlots();
     }
@@ -94,8 +87,8 @@ public class ClinicManagerController {
                     }
                 }
             }
-            provider_selection.setItems(providerList);
-            displayProviders();
+            office_provider_selection.setItems(providerList);
+            imaging_provider_selection.setItems(providerList);
         } catch (FileNotFoundException e) {
             appendMessage("Error: " + PROVIDERS_FILE_PATH + " Cannot find providers.txt!");
         }
@@ -144,19 +137,12 @@ public class ClinicManagerController {
         return null;
     }
 
-    private void displayProviders() {
-        StringBuilder sb = new StringBuilder("Providers loaded:\n");
-        for (String provider : providerList) {
-            sb.append(provider).append("\n");
-        }
-        appendMessage(sb.toString());
-    }
-
     private void initializeTimeSlots() {
         ObservableList<String> timeSlots = FXCollections.observableArrayList();
         addTimeSlots(timeSlots, 1, 6); // Morning slots
         addTimeSlots(timeSlots, 7, 12); // Afternoon slots
-        timeslot_selection.setItems(timeSlots);
+        office_timeslot_selection.setItems(timeSlots);
+        imaging_timeslot_selection.setItems(timeSlots);
     }
 
     private void addTimeSlots(ObservableList<String> timeSlots, int startSlot, int endSlot) {
@@ -167,13 +153,31 @@ public class ClinicManagerController {
     }
 
     @FXML
-    private void handleSchedule(javafx.event.ActionEvent event) {
-        String firstName = patient_first_name.getText();
-        String lastName = patient_last_name.getText();
-        LocalDate appointmentDate = appointment_date.getValue();
-        String timeslotStr = timeslot_selection.getValue();
-        String providerName = provider_selection.getValue();
-        LocalDate dob = date_of_birth.getValue();
+    private void handleScheduleOffice() {
+        scheduleAppointment("Office");
+    }
+
+    @FXML
+    private void handleScheduleImaging() {
+        scheduleAppointment("Imaging");
+    }
+
+    private void scheduleAppointment(String type) {
+        TextField firstNameField = type.equals("Office") ? office_patient_first_name : imaging_patient_first_name;
+        TextField lastNameField = type.equals("Office") ? office_patient_last_name : imaging_patient_last_name;
+        DatePicker appointmentDatePicker = type.equals("Office") ? office_appointment_date : imaging_appointment_date;
+        DatePicker dobPicker = type.equals("Office") ? office_date_of_birth : imaging_date_of_birth;
+        ComboBox<String> timeslotSelection = type.equals("Office") ? office_timeslot_selection : imaging_timeslot_selection;
+        ComboBox<String> providerSelection = type.equals("Office") ? office_provider_selection : imaging_provider_selection;
+
+        String firstName = firstNameField.getText();
+        String lastName = lastNameField.getText();
+        LocalDate appointmentDate = appointmentDatePicker.getValue();
+        String timeslotStr = timeslotSelection.getValue();
+        String providerName = providerSelection.getValue();
+        LocalDate dob = dobPicker.getValue();
+
+        String appointmentCode = type.equals("Office") ? "D" : "T";
 
         System.out.println(firstName + " " + lastName + " " + appointmentDate + " " + timeslotStr + " " + providerName + " " + dob);
 
@@ -191,12 +195,12 @@ public class ClinicManagerController {
         }
 
         try {
-            createNewAppointment(firstName, lastName, dob, appointmentDate, timeslotStr, providerName);
+            createNewAppointment(firstName, lastName, dob, appointmentDate, timeslotStr, providerName, appointmentCode);
             Platform.runLater(() -> {
                 appendMessage(firstName + " " + appointmentDate + " Success.");
             });
             System.out.println("Success");
-            clearFields();
+            clearFields(type);
         } catch (Exception e) {
             appendMessage("Error.");
             System.out.println("Error");
@@ -224,7 +228,7 @@ public class ClinicManagerController {
         return false;
     }
 
-    private void createNewAppointment(String firstName, String lastName, LocalDate dob, LocalDate appointmentDate, String timeslot, String provider) {
+    private void createNewAppointment(String firstName, String lastName, LocalDate dob, LocalDate appointmentDate, String timeslot, String provider, String appointmentTypeCode) {
         try {
             Date dateOfBirth = new Date(dob.getYear(), dob.getMonthValue(), dob.getDayOfMonth());
             Date appointmentDateConverted = new Date(appointmentDate.getYear(), appointmentDate.getMonthValue(), appointmentDate.getDayOfMonth());
@@ -236,11 +240,11 @@ public class ClinicManagerController {
                 return;
             }
 
+            String npi = selectedDoctor.getNpi();  // Fetch NPI from doctor
             Appointment newAppointment = new Appointment(appointmentDateConverted, Timeslot.fromString(timeslot), newPatient, selectedDoctor);
             appointmentList.add(newAppointment);
 
-            appendMessage("Appointment successfully created for " + firstName + " on " + appointmentDate);
-            System.out.println("Appointment successfully created for " + firstName + " on " + appointmentDate);
+            appendMessage("Appointment successfully created: " + appointmentTypeCode + "," + appointmentDate + "," + timeslot + "," + firstName + "," + lastName + "," + dob + "," + npi);
         } catch (Exception e) {
             e.printStackTrace();
             appendMessage("Error while creating appointment.");
@@ -278,13 +282,20 @@ public class ClinicManagerController {
         return null;
     }
 
-
-    private void clearFields() {
-        patient_first_name.clear();
-        patient_last_name.clear();
-        appointment_date.setValue(null);
-        timeslot_selection.setValue(null);
-        provider_selection.setValue(null);
+    private void clearFields(String type) {
+        if (type.equals("Office")) {
+            office_patient_first_name.clear();
+            office_patient_last_name.clear();
+            office_appointment_date.setValue(null);
+            office_timeslot_selection.setValue(null);
+            office_provider_selection.setValue(null);
+        } else {
+            imaging_patient_first_name.clear();
+            imaging_patient_last_name.clear();
+            imaging_appointment_date.setValue(null);
+            imaging_timeslot_selection.setValue(null);
+            imaging_provider_selection.setValue(null);
+        }
     }
 
     private void appendMessage(String message) {
