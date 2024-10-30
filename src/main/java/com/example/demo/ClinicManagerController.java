@@ -19,7 +19,6 @@ import javafx.collections.ObservableList;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class ClinicManagerController {
@@ -63,6 +62,17 @@ public class ClinicManagerController {
     @FXML
     private ComboBox<String> imaging_provider_selection;
 
+    @FXML
+    private ComboBox<String> display_selector;
+
+    @FXML
+    private TextArea display_text_area;
+
+    @FXML
+    private Button show_button;
+
+    private ObservableList<Provider> doctorList = FXCollections.observableArrayList();
+    private ObservableList<Provider> technicianList = FXCollections.observableArrayList();
     private ObservableList<String> providerList;
     private static final String PROVIDERS_FILE_PATH = "providers.txt";
     private List<Appointment> appointmentList;
@@ -73,24 +83,38 @@ public class ClinicManagerController {
         loadProviders();
         appointmentList = new List<>();
         initializeTimeSlots();
+        initializeDisplayOptions();
     }
 
+    @FXML
     private void loadProviders() {
         try (Scanner scanner = new Scanner(new File(PROVIDERS_FILE_PATH))) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine().trim();
                 if (!line.isEmpty()) {
                     Provider provider = parseProvider(line);
-                    if (provider != null) {
-                        providerList.add(provider.getProfile().getFname() + " " + provider.getProfile().getLname()
-                                + " (" + provider.getLocation().name() + ")");
+                    if (provider instanceof Doctor) {
+                        doctorList.add(provider);
+                    } else if (provider instanceof Technician) {
+                        technicianList.add(provider);
                     }
                 }
             }
-            office_provider_selection.setItems(providerList);
-            imaging_provider_selection.setItems(providerList);
+
+            ObservableList<String> doctorNames = FXCollections.observableArrayList();
+            for (Provider doctor : doctorList) {
+                doctorNames.add(doctor.getProfile().getFname() + " " + doctor.getProfile().getLname() + " (" + doctor.getLocation().name() + ")");
+            }
+            office_provider_selection.setItems(doctorNames);
+
+            ObservableList<String> technicianNames = FXCollections.observableArrayList();
+            for (Provider technician : technicianList) {
+                technicianNames.add(technician.getProfile().getFname() + " " + technician.getProfile().getLname() + " (" + technician.getLocation().name() + ")");
+            }
+            imaging_provider_selection.setItems(technicianNames);
+
         } catch (FileNotFoundException e) {
-            appendMessage("Error: " + PROVIDERS_FILE_PATH + " Cannot find providers.txt!");
+            appendMessage("Error: " + PROVIDERS_FILE_PATH + " cannot be found.");
         }
     }
 
@@ -105,17 +129,17 @@ public class ClinicManagerController {
         String providerType = tokens[0].toUpperCase();
         String firstName = tokens[1];
         String lastName = tokens[2];
-        String[] dateParts = tokens[3].split("/");
 
+        String[] dateParts = tokens[3].split("/");
         if (dateParts.length != 3) {
             status_messages.appendText("Error: Invalid date format.\n");
             return null;
         }
-
         Date dateOfBirth = new Date(
                 Integer.parseInt(dateParts[2]),
                 Integer.parseInt(dateParts[0]),
-                Integer.parseInt(dateParts[1]));
+                Integer.parseInt(dateParts[1])
+        );
 
         Location location = Location.valueOf(tokens[4].toUpperCase());
 
@@ -124,16 +148,25 @@ public class ClinicManagerController {
                 status_messages.appendText("Error: Invalid doctor data format.\n");
                 return null;
             }
-            return new Doctor(new Profile(firstName, lastName, dateOfBirth), location,
-                    Specialty.valueOf(tokens[5].toUpperCase()), tokens[6]);
+            return new Doctor(
+                    new Profile(firstName, lastName, dateOfBirth),
+                    location,
+                    Specialty.valueOf(tokens[5].toUpperCase()),
+                    tokens[6]
+            );
         } else if (providerType.equals("T")) {
             if (tokens.length < 6) {
                 status_messages.appendText("Error: Invalid technician data format.\n");
                 return null;
             }
-            return new Technician(new Profile(firstName, lastName, dateOfBirth), location,
-                    Integer.parseInt(tokens[5]));
+            return new Technician(
+                    new Profile(firstName, lastName, dateOfBirth),
+                    location,
+                    Integer.parseInt(tokens[5])
+            );
         }
+
+        status_messages.appendText("Error: Unrecognized provider type.\n");
         return null;
     }
 
@@ -240,14 +273,52 @@ public class ClinicManagerController {
                 return;
             }
 
-            String npi = selectedDoctor.getNpi();  // Fetch NPI from doctor
-            Appointment newAppointment = new Appointment(appointmentDateConverted, Timeslot.fromString(timeslot), newPatient, selectedDoctor);
+            String slotNumber = convertTimeToSlot(timeslot);
+            if (slotNumber == null) {
+                appendMessage("Invalid time slot.");
+                return;
+            }
+
+            Timeslot selectedTimeslot = Timeslot.fromString(slotNumber);
+
+            Appointment newAppointment = new Appointment(appointmentDateConverted, selectedTimeslot, newPatient, selectedDoctor);
             appointmentList.add(newAppointment);
 
-            appendMessage("Appointment successfully created: " + appointmentTypeCode + "," + appointmentDate + "," + timeslot + "," + firstName + "," + lastName + "," + dob + "," + npi);
+            appendMessage("Appointment successfully created: " + appointmentTypeCode + "," + appointmentDate + "," + timeslot + "," + firstName + "," + lastName + "," + dob + "," + selectedDoctor.getNpi());
         } catch (Exception e) {
             e.printStackTrace();
             appendMessage("Error while creating appointment.");
+        }
+    }
+
+    private String convertTimeToSlot(String timeslot) {
+        switch (timeslot) {
+            case "9:00 AM":
+                return "1";
+            case "9:30 AM":
+                return "2";
+            case "10:00 AM":
+                return "3";
+            case "10:30 AM":
+                return "4";
+            case "11:00 AM":
+                return "5";
+            case "11:30 AM":
+                return "6";
+            case "2:00 PM":
+                return "7";
+            case "2:30 PM":
+                return "8";
+            case "3:00 PM":
+                return "9";
+            case "3:30 PM":
+                return "10";
+            case "4:00 PM":
+                return "11";
+            case "4:30 PM":
+                return "12";
+            default:
+                return null;
         }
     }
 
@@ -260,27 +331,19 @@ public class ClinicManagerController {
         String firstName = providerParts[0];
         String lastName = providerParts[1];
 
-        for (String providerInfo : providerList) {
-            String[] providerDetails = providerInfo.split(" ");
-            if (providerDetails.length < 2) {
-                continue;
-            }
-
-            String providerFirstName = providerDetails[0];
-            String providerLastName = providerDetails[1];
-
-            if (firstName.equalsIgnoreCase(providerFirstName) && lastName.equalsIgnoreCase(providerLastName)) {
-                for (int i = 0; i < providerList.size(); i++) {
-                    Provider provider = parseProvider(providerList.get(i));
-                    if (provider instanceof Doctor) {
-                        return (Doctor) provider;
-                    }
+        for (Provider provider : doctorList) {
+            if (provider instanceof Doctor) {
+                Doctor doctor = (Doctor) provider;
+                if (doctor.getProfile().getFname().equalsIgnoreCase(firstName) &&
+                        doctor.getProfile().getLname().equalsIgnoreCase(lastName)) {
+                    return doctor;
                 }
             }
         }
 
         return null;
     }
+
 
     private void clearFields(String type) {
         if (type.equals("Office")) {
@@ -303,4 +366,38 @@ public class ClinicManagerController {
             status_messages.appendText(message + "\n");
         });
     }
+
+    private void initializeDisplayOptions() {
+        ObservableList<String> displayOptions = FXCollections.observableArrayList();
+        displayOptions.add("Show Appointments");
+        display_selector.setItems(displayOptions);
+
+        display_selector.setOnAction(event -> handleDisplaySelection());
+    }
+
+    @FXML
+    private void handleDisplaySelection() {
+        String selectedOption = display_selector.getValue();
+
+        if (selectedOption != null && selectedOption.equals("Show Appointments")) {
+            displayAppointments();
+        }
+    }
+
+    @FXML
+    private void handleShowButtonAction() {
+        handleDisplaySelection();
+    }
+
+    private void displayAppointments() {
+        StringBuilder displayText = new StringBuilder();
+
+        for (int i = 0; i < appointmentList.size(); i++) {
+            Appointment appointment = appointmentList.get(i);
+            displayText.append(appointment.toString()).append("\n");
+        }
+
+        display_text_area.setText(displayText.toString());
+    }
+
 }
