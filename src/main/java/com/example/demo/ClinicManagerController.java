@@ -17,6 +17,7 @@ import javafx.collections.ObservableList;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FilterOutputStream;
 import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Scanner;
@@ -175,22 +176,19 @@ public class ClinicManagerController {
     private ObservableList<String> OBSproviderList;
     private static final String PROVIDERS_FILE_PATH = "providers.txt";
 
-    public ClinicManagerController() {
+    @FXML
+    public void initialize() {
         providerList = new List<>();
         appointmentList = new List<>();
         technicianRotationList = new List<>();
         technicianRotationIndex = INITIAL_ROTATION_INDEX;
 
-        printTechnicianRotation();
-
-        int MAX_TECHNICIANS = technicianRotationList.size();
-        technicianAssigned = new boolean[MAX_TIMESLOTS][MAX_TECHNICIANS];
-    }
-
-    @FXML
-    public void initialize() {
         OBSproviderList = FXCollections.observableArrayList();
         loadProviders();
+        int MAX_TECHNICIANS = technicianRotationList.size();
+        technicianAssigned = new boolean[MAX_TIMESLOTS][MAX_TECHNICIANS];
+
+        printTechnicianRotation();
         appointmentList = new List<>();
         initializeTimeSlots();
         initializeDisplayOptions();
@@ -857,17 +855,26 @@ public class ClinicManagerController {
 
     @FXML
     private void processImagingAppointment(ActionEvent actionEvent) {
-        String firstName = imaging_patient_first_name.getText();
-        String lastName = imaging_patient_last_name.getText();
-        LocalDate appointmentDateLocal = imaging_appointment_date.getValue();
-        LocalDate dobLocal = imaging_date_of_birth.getValue();
-        String timeslotStr = imaging_timeslot_selection.getValue();
-        String imagingService = imaging_service.getValue();
+        TextField firstNameField = imaging_patient_first_name;
+        TextField lastNameField = imaging_patient_last_name;
+        DatePicker appointmentDatePicker = imaging_appointment_date;
+        DatePicker dobPicker =  imaging_date_of_birth;
+        ComboBox<String> timeslotSelection = imaging_timeslot_selection;
+        ComboBox<String> imagingSelection = imaging_service;
+
+        String firstName = firstNameField.getText();
+        String lastName = lastNameField.getText();
+        LocalDate appointmentDateLocal = appointmentDatePicker.getValue();
+        String timeslotStr = timeslotSelection.getValue();
+        String imagingService = imagingSelection.getValue();
+        LocalDate dobLocal = dobPicker.getValue();
+
         Date appointmentDate = convertToDate(appointmentDateLocal);
         Date dob = convertToDate(dobLocal);
 
         System.out.println("T," + appointmentDate + "," + convertTimeToSlot(timeslotStr) + "," +
                 firstName + "," + lastName + "," + dob + "," + imagingService);
+
         if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
                 appointmentDateLocal == null || dobLocal == null || timeslotStr == null || imagingService == null) {
             appendMessage("Fill all fields");
@@ -875,12 +882,9 @@ public class ClinicManagerController {
             return;
         }
 
-        if (!validateImagingService(imagingService)) return;
-
         try {
-            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate));
             Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
-            dob = validateDateOfBirth(String.valueOf(dob));
+
             if (!validateInputs(appointmentDate, timeslot, dob)) return;
             handleImagingAppointment(firstName,lastName, appointmentDate, timeslot, dob, imagingService);
         } catch (Exception e) {
@@ -1021,15 +1025,6 @@ public class ClinicManagerController {
         }
     }
 
-    /**
-     * Handles the rescheduling process.
-     *
-     * @param tokens          an array of strings containing the rescheduling command details
-     * @param appointmentDate the appointment date
-     * @param oldSlot         the original timeslot of the appointment
-     * @param dob             the patient's date of birth
-     * @param newSlot         the new timeslot to reschedule to
-     */
     private void handleRescheduling(String firstName,String lastName, Date appointmentDate, Timeslot oldSlot, Date dob, Timeslot newSlot) {
 
         // Find appointment in the old timeslot
@@ -1243,6 +1238,10 @@ public class ClinicManagerController {
      * @return the available Technician if found, or null if no technician is available
      */
     private Technician findAvailableTechnician(Timeslot timeslot, Radiology room) {
+        if (technicianRotationList.isEmpty()) {
+            System.out.println("Error: No technicians available for rotation.");
+            return null;
+        }
         int technicianCount = technicianRotationList.size();
         int slotIndex = timeslot.getSlotIndex() - 1;
 
