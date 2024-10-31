@@ -126,9 +126,6 @@ public class ClinicManagerController {
     private ComboBox<String> imaging_timeslot_selection;
 
     @FXML
-    private ComboBox<String> imaging_provider_selection;
-
-    @FXML
     private ComboBox<String> imaging_service;
 
     @FXML
@@ -220,7 +217,6 @@ public class ClinicManagerController {
             for (Provider technician : OBStechnicianList) {
                 technicianNames.add(technician.getProfile().getFname() + " " + technician.getProfile().getLname() + " (" + technician.getLocation().name() + ")");
             }
-            imaging_provider_selection.setItems(technicianNames);
 
             createTechnicianRotation();
             Sort.provider(providerList);
@@ -280,12 +276,12 @@ public class ClinicManagerController {
     }
 
     private void scheduleAppointment(String type) {
-        TextField firstNameField = type.equals("Office") ? office_patient_first_name : imaging_patient_first_name;
-        TextField lastNameField = type.equals("Office") ? office_patient_last_name : imaging_patient_last_name;
-        DatePicker appointmentDatePicker = type.equals("Office") ? office_appointment_date : imaging_appointment_date;
-        DatePicker dobPicker = type.equals("Office") ? office_date_of_birth : imaging_date_of_birth;
-        ComboBox<String> timeslotSelection = type.equals("Office") ? office_timeslot_selection : imaging_timeslot_selection;
-        ComboBox<String> providerSelection = type.equals("Office") ? office_provider_selection : imaging_provider_selection;
+        TextField firstNameField = office_patient_first_name;
+        TextField lastNameField = office_patient_last_name;
+        DatePicker appointmentDatePicker = office_appointment_date;
+        DatePicker dobPicker =  office_date_of_birth;
+        ComboBox<String> timeslotSelection = office_timeslot_selection;
+        ComboBox<String> providerSelection = office_provider_selection;
 
         String firstName = firstNameField.getText();
         String lastName = lastNameField.getText();
@@ -422,6 +418,10 @@ public class ClinicManagerController {
     }
 
     private String convertTimeToSlot(String timeslot) {
+        if (timeslot == null) {
+            System.out.println("Error: timeslot is null.");
+            return null;
+        }
         switch (timeslot) {
             case "9:00 AM":
                 return "1";
@@ -464,7 +464,6 @@ public class ClinicManagerController {
             imaging_patient_last_name.clear();
             imaging_appointment_date.setValue(null);
             imaging_timeslot_selection.setValue(null);
-            imaging_provider_selection.setValue(null);
         }
     }
 
@@ -833,13 +832,8 @@ public class ClinicManagerController {
         return false;
     }
 
-    /**
-     * Processes an imaging appointment based on the provided tokens.
-     *
-     * @param tokens an array of strings containing appointment details,
-     *               including date, timeslot, patient information, and imaging service
-     */
-    private void processImagingAppointment(String[] tokens) {
+    @FXML
+    private void processImagingAppointment(ActionEvent actionEvent) {
         String firstName = imaging_patient_first_name.getText();
         String lastName = imaging_patient_last_name.getText();
         LocalDate appointmentDateLocal = imaging_appointment_date.getValue();
@@ -865,8 +859,7 @@ public class ClinicManagerController {
             Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
             dob = validateDateOfBirth(String.valueOf(dob));
             if (!validateInputs(appointmentDate, timeslot, dob)) return;
-
-            handleImagingAppointment(tokens, appointmentDate, timeslot, dob, imagingService);
+            handleImagingAppointment(firstName,lastName, appointmentDate, timeslot, dob, imagingService);
         } catch (Exception e) {
             System.out.println("Error: Invalid imaging appointment command.");
         }
@@ -886,25 +879,12 @@ public class ClinicManagerController {
         return true;
     }
 
-    /**
-     * Handles the creation and validation of an imaging appointment.
-     *
-     * @param tokens          the array of appointment tokens
-     * @param appointmentDate the validated appointment date
-     * @param timeslot        the validated timeslot
-     * @param dob             the patient's date of birth
-     * @param imagingService  the imaging service to use for the appointment
-     */
-    private void handleImagingAppointment(String[] tokens, Date appointmentDate, Timeslot timeslot, Date dob, String imagingService) {
-        String firstName = tokens[3];
-        String lastName = tokens[4];
+    private void handleImagingAppointment(String firstName, String lastName, Date appointmentDate, Timeslot timeslot, Date dob, String imagingService) {
         Radiology room = Radiology.valueOf(imagingService);
-
         if (isDuplicateImagingAppointment(firstName, lastName, dob, appointmentDate, timeslot)) {
             System.out.printf("%s %s %s has an existing appointment at the same time slot.%n", firstName, lastName, dob);
             return;
         }
-
         Technician technician = findAvailableTechnician(timeslot, room);
         if (technician == null) {
             System.out.printf("Cannot find an available technician at all locations for %s at slot %d.%n", room, timeslot.getSlotIndex());
@@ -1317,6 +1297,7 @@ public class ClinicManagerController {
     public void appendToOfficeTextArea(String text) {
         status_messages.appendText(text + "\n");
     }
+
 
 
 }
