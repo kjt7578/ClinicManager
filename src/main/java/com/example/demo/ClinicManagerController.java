@@ -131,10 +131,7 @@ public class ClinicManagerController {
     private ComboBox<String> display_selector;
 
     @FXML
-    private TextArea display_text_area;
-
-    @FXML
-    private Button show_button;
+    public TextArea display_text_area;
 
     private ObservableList<Provider> OBSdoctorList = FXCollections.observableArrayList();
     private ObservableList<Provider> OBStechnicianList = FXCollections.observableArrayList();
@@ -160,6 +157,18 @@ public class ClinicManagerController {
         appointmentList = new List<>();
         initializeTimeSlots();
         initializeDisplayOptions();
+        Sort.setController(this);
+
+        ObservableList<String> displayOptions = FXCollections.observableArrayList(
+                "PA: Sort by Appointment Date",
+                "PP: Sort by Patient",
+                "PL: Sort by County",
+                "PS: Display Billing by Specialty",
+                "PO: Sort Office Appointments by County",
+                "PI: Sort Imaging Appointments by County",
+                "PC: Display Credit by Provider"
+        );
+        display_selector.setItems(displayOptions);
     }
 
     @FXML
@@ -420,20 +429,61 @@ public class ClinicManagerController {
     @FXML
     private void handleDisplaySelection() {
         String selectedOption = display_selector.getValue();
+        String command = "";
 
-        if (selectedOption != null && selectedOption.equals("Show Appointments")) {
+        if (appointmentList.size() == 0) {
+            display_text_area.setText("No appointments to display.");
+            return;
+        }
+        if (selectedOption != null) {
+            switch (selectedOption) {
+                case "Sort by Appointment Date":
+                    command = "PA";
+                    break;
+                case "Sort by Patient":
+                    command = "PP";
+                    break;
+                case "Sort by County":
+                    command = "PL";
+                    break;
+                case "Display Billing by Specialty":
+                    command = "PS";
+                    break;
+                case "Sort Office Appointments by County":
+                    command = "PO";
+                    break;
+                case "Sort Imaging Appointments by County":
+                    command = "PI";
+                    break;
+                case "Display Credit by Provider":
+                    command = "PC";
+                    break;
+                default:
+                    appendMessage("Invalid display option selected.");
+                    return;
+            }
+
+            processSortingCommand(appointmentList, command);
+            System.out.println("Command: " + command);
+            System.out.println("Appointment List Size: " + appointmentList.size());
+
             displayAppointments();
+        } else {
+            appendMessage("Please select a display option.");
         }
     }
 
     private void displayAppointments() {
-        StringBuilder displayText = new StringBuilder();
+        if (appointmentList.size() == 0) {
+            display_text_area.setText("No appointments to display.");
+            return;
+        }
 
+        StringBuilder displayText = new StringBuilder();
         for (int i = 0; i < appointmentList.size(); i++) {
             Appointment appointment = appointmentList.get(i);
             displayText.append(appointment.toString()).append("\n");
         }
-
         display_text_area.setText(displayText.toString());
     }
 
