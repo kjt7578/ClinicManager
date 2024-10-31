@@ -354,6 +354,7 @@ public class ClinicManagerController {
 
             // Create the new appointment and add it to the appointment list
             createNewAppointment(firstName, lastName, dob, appointmentDate, timeslot, doctor);
+
         } catch (Exception e) {
             System.out.println("Error: Invalid office appointment command.");
         }
@@ -799,6 +800,10 @@ public class ClinicManagerController {
     private void createNewAppointment(String firstName, String lastName, Date dob, Date appointmentDate, Timeslot timeslot, Doctor doctor) {
         Appointment newAppointment = new Appointment(appointmentDate, timeslot, new Patient(new Profile(firstName, lastName, dob)), doctor);
         appointmentList.add(newAppointment);
+
+        appendToOfficeTextArea(appointmentDate, timeslot, firstName, lastName, dob, doctor.getProfile().getFname(), doctor.getProfile().getLname(),
+                doctor.getProfile().getDob(), doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi());
+        // Prints in terminal
         System.out.printf("%s %s %s %s %s [%s %s %s, %s[%s, #%s] booked.%n",
                 appointmentDate, timeslot, firstName, lastName, dob, doctor.getProfile().getFname(), doctor.getProfile().getLname(),
                 doctor.getProfile().getDob(), doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi());
@@ -933,6 +938,11 @@ public class ClinicManagerController {
                                              Timeslot timeslot, Technician technician, Radiology room, String imagingService) {
         Imaging newImaging = new Imaging(appointmentDate, timeslot, new Patient(new Profile(firstName, lastName, dob)), technician, room);
         appointmentList.add(newImaging);
+
+
+        appendToImagingTextArea(appointmentDate, timeslot, firstName, lastName, dob, technician.getProfile().getFname(), technician.getProfile().getLname(),
+                technician.getProfile().getDob(), technician.getLocation(), (double) technician.getRatePerVisit(), imagingService);
+
         System.out.printf("%s %s %s %s %s [%s %s %s, %s][rate: $%.2f][%s] booked.%n",
                 appointmentDate.toString(), timeslot.toString(), firstName, lastName, dob, technician.getProfile().getFname(),
                 technician.getProfile().getLname(), technician.getProfile().getDob(), technician.getLocation(), (double) technician.getRatePerVisit(), imagingService);
@@ -1333,10 +1343,21 @@ public class ClinicManagerController {
         display_text_area.appendText(text + "\n");
     }
 
-    public void appendToOfficeTextArea(String text) {
-        status_messages.appendText(text + "\n");
+    public void appendToOfficeTextArea(Date appointmentDate, Timeslot timeslot, String firstName, String lastName,
+                                       Date dob, String doctorFirstName, String doctorLastName, Date doctorDob,
+                                       Location doctorLocation, Specialty doctorSpecialty, String doctorNpi) {
+        String message = String.format("%s %s %s %s %s [%s %s %s, %s[%s, #%s] booked.",
+                appointmentDate, timeslot, firstName, lastName, dob, doctorFirstName,
+                doctorLastName, doctorDob, doctorLocation.toString(), doctorSpecialty.toString(), doctorNpi);
+        status_messages.appendText(message + "\n");
     }
 
-
-
+    public void appendToImagingTextArea(Date appointmentDate, Timeslot timeslot, String firstName, String lastName,
+                                        Date dob, String technicianFirstName, String technicianLastName, Date technicianDob,
+                                        Location technicianLocation, double technicianRate, String imagingService) {
+        String message = String.format("%s %s %s %s %s [%s %s %s, %s][$%.2f][%s]",
+                appointmentDate, timeslot, firstName, lastName, dob, technicianFirstName,
+                technicianLastName, technicianDob, technicianLocation.toString(), technicianRate, imagingService);
+        status_messages.appendText(message + "\n");
+    }
 }
