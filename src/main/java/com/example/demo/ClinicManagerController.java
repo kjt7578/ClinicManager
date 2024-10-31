@@ -112,6 +112,9 @@ public class ClinicManagerController {
     private TextArea status_messages;
 
     @FXML
+    private TextArea imaging_status_messages;
+
+    @FXML
     private TextField imaging_patient_first_name;
 
     @FXML
@@ -1354,9 +1357,9 @@ public class ClinicManagerController {
     public void appendToImagingTextArea(Date appointmentDate, Timeslot timeslot, String firstName, String lastName,
                                         Date dob, String technicianFirstName, String technicianLastName, Date technicianDob,
                                         Location technicianLocation, double technicianRate, String imagingService) {
-        String message = String.format("%s %s %s %s %s [%s %s %s, %s][$%.2f][%s]",
+        String message = String.format("%s %s %s %s %s [%s %s %s, %s[$%.2f][%s]",
                 appointmentDate, timeslot, firstName, lastName, dob, technicianFirstName,
                 technicianLastName, technicianDob, technicianLocation.toString(), technicianRate, imagingService);
-        status_messages.appendText(message + "\n");
+        imaging_status_messages.appendText(message + "\n");
     }
 }
