@@ -128,6 +128,9 @@ public class ClinicManagerController {
     private ComboBox<String> imaging_provider_selection;
 
     @FXML
+    private ComboBox<String> imaging_service;
+
+    @FXML
     private ComboBox<String> display_selector;
 
     @FXML
@@ -169,6 +172,10 @@ public class ClinicManagerController {
                 "PC: Display Credit by Provider"
         );
         display_selector.setItems(displayOptions);
+
+        // Set imaging service options
+        ObservableList<String> imagingServices = FXCollections.observableArrayList("XRAY", "CATSCAN", "ULTRASOUND");
+        imaging_service.setItems(imagingServices);
     }
 
     @FXML
@@ -256,8 +263,6 @@ public class ClinicManagerController {
     private void handleScheduleImaging() {
         scheduleAppointment("Imaging");
     }
-
-
 
     private void scheduleAppointment(String type) {
         TextField firstNameField = type.equals("Office") ? office_patient_first_name : imaging_patient_first_name;
