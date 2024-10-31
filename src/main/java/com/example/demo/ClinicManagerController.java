@@ -279,8 +279,6 @@ public class ClinicManagerController {
         scheduleAppointment("Imaging");
     }
 
-
-
     private void scheduleAppointment(String type) {
         TextField firstNameField = type.equals("Office") ? office_patient_first_name : imaging_patient_first_name;
         TextField lastNameField = type.equals("Office") ? office_patient_last_name : imaging_patient_last_name;
