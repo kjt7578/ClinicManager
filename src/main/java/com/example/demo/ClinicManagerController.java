@@ -149,6 +149,27 @@ public class ClinicManagerController {
     @FXML
     private ComboBox<String> cancel_timeslot_selection;
 
+    @FXML
+    private TextField re_patient_first_name;
+
+    @FXML
+    private TextField re_patient_last_name;
+
+    @FXML
+    private DatePicker re_appointment_date;
+
+    @FXML
+    private DatePicker re_date_of_birth;
+
+    @FXML
+    private ComboBox<String> re_timeslot_selection;
+
+    @FXML
+    private ComboBox<String> re_newtimeslot_selection;
+
+    @FXML
+    private TextArea re_status_messages;
+
     private ObservableList<Provider> OBSdoctorList = FXCollections.observableArrayList();
     private ObservableList<Provider> OBStechnicianList = FXCollections.observableArrayList();
     private ObservableList<String> OBSproviderList;
@@ -256,6 +277,8 @@ public class ClinicManagerController {
         office_timeslot_selection.setItems(timeSlots);
         imaging_timeslot_selection.setItems(timeSlots);
         cancel_timeslot_selection.setItems(timeSlots);
+        re_timeslot_selection.setItems(timeSlots);
+        re_newtimeslot_selection.setItems(timeSlots);
     }
 
     private void addTimeSlots(ObservableList<String> timeSlots, int startSlot, int endSlot) {
@@ -664,7 +687,7 @@ public class ClinicManagerController {
                 //processCancellation(tokens);
                 break;
             case "R":
-                processReschedule(tokens);
+                //processReschedule(tokens);
                 break;
             default:
                 System.out.println("Invalid appointment command!");
@@ -957,24 +980,34 @@ public class ClinicManagerController {
         return false;
     }
 
-    /**
-     * Processes the rescheduling of an appointment based on the provided details.
-     *
-     * @param tokens an array of strings containing the rescheduling command details,
-     *               including appointment date, old timeslot, first name, last name,
-     *               date of birth, and new timeslot
-     */
-    private void processReschedule(String[] tokens) {
-        if (!validateTokenLength(tokens)) return;
+    @FXML
+    private void processReschedule(ActionEvent actionEvent){
+        String firstName = re_patient_first_name.getText();
+        String lastName = re_patient_last_name.getText();
+        LocalDate appointmentDateLocal = re_appointment_date.getValue();
+        LocalDate dobLocal = re_date_of_birth.getValue();
+        String oldTimeslotStr = re_timeslot_selection.getValue();
+        String newTimeslotStr = re_newtimeslot_selection.getValue();
+
+        if (firstName == null || firstName.isEmpty() ||
+                lastName == null || lastName.isEmpty() ||
+                appointmentDateLocal == null || dobLocal == null ||
+                oldTimeslotStr == null || newTimeslotStr == null) {
+            re_status_messages.appendText("Fill all fields\n");
+            return;
+        }
 
         try {
-            Date appointmentDate = validateAppointmentDate(tokens[1]);
-            Timeslot oldSlot = validateTimeslot(tokens[2]);
-            Date dob = validateDateOfBirth(tokens[5]);
-            Timeslot newSlot = validateTimeslot(tokens[6]);
+            Date appointmentDate = validateAppointmentDate(appointmentDateLocal.toString());
+            Timeslot oldSlot = validateTimeslot(convertTimeToSlot(oldTimeslotStr));
+            Date dob = validateDateOfBirth(dobLocal.toString());
+            Timeslot newSlot = validateTimeslot(convertTimeToSlot(newTimeslotStr));
             if (!validateInputs(appointmentDate, oldSlot, dob, newSlot)) return;
 
-            handleRescheduling(tokens, appointmentDate, oldSlot, dob, newSlot);
+            System.out.println("R," + appointmentDate + "," + convertTimeToSlot(oldTimeslotStr) + "," +
+                    firstName + "," + lastName + "," + dob + "," + convertTimeToSlot(newTimeslotStr));
+
+            handleRescheduling(firstName, lastName, appointmentDate, oldSlot, dob, newSlot);
         } catch (Exception e) {
             System.out.println("Missing data tokens.");
         }
@@ -989,9 +1022,7 @@ public class ClinicManagerController {
      * @param dob             the patient's date of birth
      * @param newSlot         the new timeslot to reschedule to
      */
-    private void handleRescheduling(String[] tokens, Date appointmentDate, Timeslot oldSlot, Date dob, Timeslot newSlot) {
-        String firstName = tokens[3];
-        String lastName = tokens[4];
+    private void handleRescheduling(String firstName,String lastName, Date appointmentDate, Timeslot oldSlot, Date dob, Timeslot newSlot) {
 
         // Find appointment in the old timeslot
         Appointment appointmentToReschedule = findAppointment(appointmentDate, oldSlot, firstName, lastName, dob);
