@@ -22,7 +22,15 @@ import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Scanner;
 
-
+/**
+ * The ClinicManagerController class manages the functionality of the clinic's appointment scheduling system.
+ * It handles user interactions within the JavaFX interface
+ *
+ * The class utilizes FXML components for the user interface and contains methods to manipulate
+ * appointment lists and display messages to the user.
+ *
+ * @author Stephen Kwok and Jeongtae Kim
+ */
 public class ClinicManagerController {
 
     /**
