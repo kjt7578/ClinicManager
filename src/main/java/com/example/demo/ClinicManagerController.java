@@ -318,9 +318,6 @@ public class ClinicManagerController {
         } catch (Exception e) {
             System.out.println("Error: Invalid office appointment command.");
         }
-
-
-        System.out.println("handleSchedule Done");
     }
 
     private Date convertToDate(LocalDate localDate) {
@@ -426,6 +423,42 @@ public class ClinicManagerController {
         display_selector.setOnAction(event -> handleDisplaySelection());
     }
 
+    /**
+     * Processes commands related to sorting appointments.
+     *
+     * @param appointments the list of appointments to manage
+     * @param command      the command string containing the sorting operation to perform
+     */
+    private void processSortingCommand(List<Appointment> appointments, String command) {
+        System.out.println(command);
+        switch (command) {
+            case "PA": // Sort by appointment date, time, then provider's last name
+                Sort.appointment(appointments, 'A');
+                break;
+            case "PP": // Sort by patient (last name, first name, date of birth, appointment date, time)
+                Sort.appointment(appointments, 'P');
+                break;
+            case "PL": // Sort by county name, appointment date, time
+                Sort.appointment(appointments, 'L');
+                break;
+            case "PS": // Display billing statements based on provider's specialty
+                Sort.appointment(appointments, 'S');
+                break;
+            case "PO": // Sort office appointments by county name, date, time
+                Sort.appointment(appointments, 'O');
+                break;
+            case "PI": // Sort imaging appointments by county name, date, time
+                Sort.appointment(appointments, 'I');
+                break;
+            case "PC": // Display expected credit amounts for providers, sorted by provider profile
+                Sort.appointment(appointments, 'C');
+                break;
+            default:
+                System.out.println("Invalid command!");
+                break;
+        }
+    }
+
     @FXML
     private void handleDisplaySelection() {
         String selectedOption = display_selector.getValue();
@@ -437,39 +470,37 @@ public class ClinicManagerController {
         }
         if (selectedOption != null) {
             switch (selectedOption) {
-                case "Sort by Appointment Date":
+                case "PA: Sort by Appointment Date":
                     command = "PA";
                     break;
-                case "Sort by Patient":
+                case "PP: Sort by Patient":
                     command = "PP";
                     break;
-                case "Sort by County":
+                case "PL: Sort by County":
                     command = "PL";
                     break;
-                case "Display Billing by Specialty":
+                case "PS: Display Billing by Specialty":
                     command = "PS";
                     break;
-                case "Sort Office Appointments by County":
+                case "PO: Sort Office Appointments by County":
                     command = "PO";
                     break;
-                case "Sort Imaging Appointments by County":
+                case "PI: Sort Imaging Appointments by County":
                     command = "PI";
                     break;
-                case "Display Credit by Provider":
+                case "PC: Display Credit by Provider":
                     command = "PC";
                     break;
                 default:
-                    appendMessage("Invalid display option selected.");
+                    appendToDisplayTextArea("Invalid display option selected.");
                     return;
             }
 
             processSortingCommand(appointmentList, command);
             System.out.println("Command: " + command);
-            System.out.println("Appointment List Size: " + appointmentList.size());
-
             displayAppointments();
         } else {
-            appendMessage("Please select a display option.");
+            appendToDisplayTextArea("Please select a display option.");
         }
     }
 
@@ -583,40 +614,7 @@ public class ClinicManagerController {
         }
     }
 
-    /**
-     * Processes commands related to sorting appointments.
-     *
-     * @param appointments the list of appointments to manage
-     * @param command      the command string containing the sorting operation to perform
-     */
-    private void processSortingCommand(List<Appointment> appointments, String command) {
-        switch (command) {
-            case "PA": // Sort by appointment date, time, then provider's last name
-                Sort.appointment(appointments, 'A');
-                break;
-            case "PP": // Sort by patient (last name, first name, date of birth, appointment date, time)
-                Sort.appointment(appointments, 'P');
-                break;
-            case "PL": // Sort by county name, appointment date, time
-                Sort.appointment(appointments, 'L');
-                break;
-            case "PS": // Display billing statements based on provider's specialty
-                Sort.appointment(appointments, 'S');
-                break;
-            case "PO": // Sort office appointments by county name, date, time
-                Sort.appointment(appointments, 'O');
-                break;
-            case "PI": // Sort imaging appointments by county name, date, time
-                Sort.appointment(appointments, 'I');
-                break;
-            case "PC": // Display expected credit amounts for providers, sorted by provider profile
-                Sort.appointment(appointments, 'C');
-                break;
-            default:
-                System.out.println("Invalid command!");
-                break;
-        }
-    }
+
 
     /**
      * Processes a command to create a new office appointment using the provided tokens.
@@ -1267,5 +1265,13 @@ public class ClinicManagerController {
             }
         }
         return null;
+    }
+
+    public void appendToDisplayTextArea(String text) {
+        display_text_area.appendText(text + "\n");
+    }
+
+    public void appendToOfficeTextArea(String text) {
+        status_messages.appendText(text + "\n");
     }
 }
