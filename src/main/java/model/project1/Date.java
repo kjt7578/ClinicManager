@@ -1,5 +1,9 @@
 package model.project1;
 
+import javafx.fxml.FXML;
+
+import java.time.LocalDate;
+
 /**
  * Represents a date with year, month, and day.
  * This class implements the Comparable interface to allow sorting of dates.
@@ -160,3 +164,44 @@ public class Date implements Comparable<Date> {
     }
 
 }
+
+/*
+//C,2/3/2025,4,john,doe,12/13/1989
+@FXML
+private void processCancellation() {
+    String firstName = cancel_patient_first_name.getText();
+    String lastName = cancel_patient_last_name.getText();
+    LocalDate appointmentDateLocal = cancel_appointment_date.getValue();
+    LocalDate dobLocal = cancel_date_of_birth.getValue();
+    String timeslotStr = cancel_timeslot_selection.getValue();
+    Date appointmentDate = convertToDate(appointmentDateLocal);
+    Date dob = convertToDate(dobLocal);
+    System.out.println("C," + appointmentDate + "," + convertTimeToSlot(timeslotStr) + "," +
+            firstName + "," + lastName + "," + dob);
+
+    if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
+            appointmentDate == null || timeslotStr == null || dob == null) {
+        appendMessage("Fill all fields");
+        System.out.println("Empty field exists");
+        return;
+    }
+
+    try {
+        appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate));
+        Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
+        dob = validateDateOfBirth(String.valueOf(dob));
+        if (!validateInputs(appointmentDate, timeslot, dob)) return;
+        Appointment appointmentToCancel = findAppointment(appointmentDate, timeslot, firstName.toLowerCase(), lastName.toLowerCase(), dob);
+
+        if (appointmentToCancel != null) {
+            appointmentList.remove(appointmentToCancel);
+            System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment has been canceled.");
+        } else {
+            System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment does not exist.");
+        }
+    } catch (Exception e) {
+        System.out.println("Error: Invalid cancellation command.");
+    }
+}
+
+ */

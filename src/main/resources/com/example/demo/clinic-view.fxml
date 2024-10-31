@@ -40,15 +40,12 @@
                         <children>
                             <TextField fx:id="imaging_patient_first_name" layoutX="17.0" layoutY="96.0" promptText="Enter Patient First Name" />
                             <DatePicker fx:id="imaging_date_of_birth" layoutX="17.0" layoutY="166.0" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" />
-                            <TextArea fx:id="status_messages1" editable="false" layoutX="205.0" layoutY="22.0" prefHeight="258.0" prefWidth="480.0" promptText="Status message" />
-                            <Button fx:id="imaging_schedule_button" layoutX="22.0" layoutY="286.0" mnemonicParsing="false" onAction="#handleScheduleImaging" text="Schedule" />
+                            <TextArea fx:id="imaging_status_messages" editable="false" layoutX="205.0" layoutY="22.0" prefHeight="258.0" prefWidth="480.0" promptText="Status message" />
+                            <Button fx:id="imaging_schedule_button" layoutX="66.0" layoutY="258.0" mnemonicParsing="false" onAction="#handleScheduleImaging" text="Schedule" />
                             <TextField fx:id="imaging_patient_last_name" layoutX="17.0" layoutY="129.0" promptText="Enter Patient Last Name" />
-
-                            <Button fx:id="imaging_cancel_button" layoutX="112.0" layoutY="286.0" mnemonicParsing="false" text="Cancel" />
                             <DatePicker fx:id="imaging_appointment_date" layoutX="17.0" layoutY="22.0" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date" />
                             <ComboBox fx:id="imaging_timeslot_selection" layoutX="19.0" layoutY="56.0" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" />
-                            <ComboBox fx:id="imaging_provider_selection" layoutX="19.0" layoutY="205.0" prefHeight="26.0" prefWidth="156.0" promptText="Provider" />
-                     <ComboBox fx:id="imaging_service" layoutX="18.0" layoutY="245.0" prefHeight="26.0" prefWidth="156.0" promptText="Imaging Service" />
+                     <ComboBox fx:id="imaging_service" layoutX="20.0" layoutY="205.0" prefHeight="26.0" prefWidth="156.0" promptText="Imaging Service" />
                         </children>
                     </AnchorPane>
                 </content>
@@ -59,8 +56,8 @@
                         <children>
                             <TextField fx:id="re_patient_first_name" layoutX="18.0" layoutY="108.0" promptText="Enter Patient First Name" />
                             <DatePicker fx:id="re_date_of_birth" layoutX="19.0" layoutY="180.0" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" />
-                            <TextArea fx:id="status_messages2" editable="false" layoutX="204.0" layoutY="22.0" prefHeight="260.0" prefWidth="480.0" promptText="Status message" />
-                            <Button fx:id="reschedule_button1" layoutX="58.0" layoutY="260.0" mnemonicParsing="false" text="Reschedule" />
+                            <TextArea fx:id="re_status_messages" editable="false" layoutX="204.0" layoutY="22.0" prefHeight="260.0" prefWidth="480.0" promptText="Status message" />
+                            <Button fx:id="reschedule_button" layoutX="58.0" layoutY="260.0" mnemonicParsing="false" text="Reschedule" />
                             <TextField fx:id="re_patient_last_name" layoutX="18.0" layoutY="141.0" promptText="Enter Patient Last Name" />
                             <DatePicker fx:id="re_appointment_date" layoutX="17.0" layoutY="29.0" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date" />
                             <ComboBox fx:id="re_timeslot_selection" layoutX="18.0" layoutY="65.0" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" />

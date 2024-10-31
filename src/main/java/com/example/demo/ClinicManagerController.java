@@ -659,7 +659,7 @@ public class ClinicManagerController {
                 processOfficeAppointment(tokens);
                 break;
             case "T":
-                processImagingAppointment(tokens);
+                //processImagingAppointment(tokens);
                 break;
             case "C":
                 //processCancellation(tokens);
@@ -840,15 +840,30 @@ public class ClinicManagerController {
      *               including date, timeslot, patient information, and imaging service
      */
     private void processImagingAppointment(String[] tokens) {
-        if (!validateTokenLength(tokens)) return;
+        String firstName = imaging_patient_first_name.getText();
+        String lastName = imaging_patient_last_name.getText();
+        LocalDate appointmentDateLocal = imaging_appointment_date.getValue();
+        LocalDate dobLocal = imaging_date_of_birth.getValue();
+        String timeslotStr = imaging_timeslot_selection.getValue();
+        String imagingService = imaging_service.getValue();
+        Date appointmentDate = convertToDate(appointmentDateLocal);
+        Date dob = convertToDate(dobLocal);
 
-        String imagingService = tokens[6].toUpperCase();
+        System.out.println("T," + appointmentDate + "," + convertTimeToSlot(timeslotStr) + "," +
+                firstName + "," + lastName + "," + dob + "," + imagingService);
+        if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
+                appointmentDateLocal == null || dobLocal == null || timeslotStr == null || imagingService == null) {
+            appendMessage("Fill all fields");
+            System.out.println("Empty field exists");
+            return;
+        }
+
         if (!validateImagingService(imagingService)) return;
 
         try {
-            Date appointmentDate = validateAppointmentDate(tokens[1]);
-            Timeslot timeslot = validateTimeslot(tokens[2]);
-            Date dob = validateDateOfBirth(tokens[5]);
+            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate));
+            Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
+            dob = validateDateOfBirth(String.valueOf(dob));
             if (!validateInputs(appointmentDate, timeslot, dob)) return;
 
             handleImagingAppointment(tokens, appointmentDate, timeslot, dob, imagingService);
