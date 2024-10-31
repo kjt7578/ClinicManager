@@ -120,6 +120,9 @@ public class ClinicManagerController {
     private TextArea status_messages;
 
     @FXML
+    private TextArea cancel_status_messages;
+
+    @FXML
     private TextArea imaging_status_messages;
 
     @FXML
@@ -391,6 +394,9 @@ public class ClinicManagerController {
 
             // Check for duplicate appointment
             if (isDuplicateAppointment(firstName, lastName, dob, appointmentDate, timeslot)) {
+                appendToOfficeTextArea(
+                        appointmentDate, timeslot, firstName, lastName, dob, doctor.getProfile().getFname(), doctor.getProfile().getLname(), doctor.getDateOfBirth(), doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi(), false  // This indicates that the appointment is a duplicate
+                );
                 System.out.printf("%s %s %s has an existing appointment at the same time slot.%n",
                         firstName, lastName, dob);
                 return;  // Stop further processing since it's a duplicate
@@ -398,6 +404,9 @@ public class ClinicManagerController {
 
             // Check if the doctor is unavailable at the given time
             if (isDoctorUnavailable(doctor, appointmentDate, timeslot)) {
+                appendToOfficeTextArea(
+                        appointmentDate, timeslot, firstName, lastName, dob, doctor.getProfile().getFname(), doctor.getProfile().getLname(), doctor.getDateOfBirth(), doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi(), false  // This indicates that the doctor is not available
+                );
                 System.out.printf("[%s %s %s, %s[%s, #%s] is not available at slot %s %n",
                         doctor.getProfile().getFname(), doctor.getProfile().getLname(), doctor.getDateOfBirth(),
                         doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi(), timeslot.getSlotIndex());
@@ -405,7 +414,7 @@ public class ClinicManagerController {
             }
 
             // Create the new appointment and add it to the appointment list
-            createNewAppointment(firstName, lastName, dob, appointmentDate, timeslot, doctor);
+            createNewAppointment(firstName, lastName, dob, appointmentDate, timeslot, doctor, true);
 
         } catch (Exception e) {
             System.out.println("Error: Invalid office appointment command.");
@@ -446,11 +455,14 @@ public class ClinicManagerController {
             if (appointmentToCancel != null) {
                 appointmentList.remove(appointmentToCancel);
                 System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment has been canceled.");
+                cancel_status_messages.appendText(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment has been canceled.\n");
             } else {
                 System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment does not exist.");
+                cancel_status_messages.appendText(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment does not exist.\n");
             }
         } catch (Exception e) {
             System.out.println("Error: Invalid cancellation command.");
+            cancel_status_messages.appendText("Error: Invalid cancellation command.\n");
         }
     }
 
@@ -830,7 +842,7 @@ public class ClinicManagerController {
             }
 
             // Create the new appointment and add it to the appointment list
-            createNewAppointment(firstName, lastName, dob, appointmentDate, timeslot, doctor);
+            createNewAppointment(firstName, lastName, dob, appointmentDate, timeslot, doctor, true);
         } catch (Exception e) {
             System.out.println("Error: Invalid office appointment command.");
         }
@@ -892,16 +904,31 @@ public class ClinicManagerController {
      * @param timeslot the timeslot for the appointment
      * @param doctor the doctor assigned to the appointment
      */
-    private void createNewAppointment(String firstName, String lastName, Date dob, Date appointmentDate, Timeslot timeslot, Doctor doctor) {
-        Appointment newAppointment = new Appointment(appointmentDate, timeslot, new Patient(new Profile(firstName, lastName, dob)), doctor);
+    private void createNewAppointment(String firstName, String lastName, Date dob, Date appointmentDate,
+                                      Timeslot timeslot, Doctor doctor, boolean isAvailable) {
+        Appointment newAppointment = new Appointment(appointmentDate, timeslot,
+                new Patient(new Profile(firstName, lastName, dob)), doctor);
         appointmentList.add(newAppointment);
 
-        appendToOfficeTextArea(appointmentDate, timeslot, firstName, lastName, dob, doctor.getProfile().getFname(), doctor.getProfile().getLname(),
-                doctor.getProfile().getDob(), doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi());
-        // Prints in terminal
-        System.out.printf("%s %s %s %s %s [%s %s %s, %s[%s, #%s] booked.%n",
-                appointmentDate, timeslot, firstName, lastName, dob, doctor.getProfile().getFname(), doctor.getProfile().getLname(),
-                doctor.getProfile().getDob(), doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi());
+        // Log the appointment status based on the availability
+        if (isAvailable) {
+            // If the doctor is available and the appointment is booked
+            appendToOfficeTextArea(appointmentDate, timeslot, firstName, lastName, dob,
+                    doctor.getProfile().getFname(), doctor.getProfile().getLname(),
+                    doctor.getProfile().getDob(), doctor.getLocation(),
+                    doctor.getSpecialty(), doctor.getNpi(), true); // Pass true for availability
+            System.out.printf("%s %s %s %s %s [%s %s %s, %s[%s, #%s] booked.%n",
+                    appointmentDate, timeslot, firstName, lastName, dob,
+                    doctor.getProfile().getFname(), doctor.getProfile().getLname(),
+                    doctor.getProfile().getDob(), doctor.getLocation(),
+                    doctor.getSpecialty(), doctor.getNpi());
+        } else {
+            // If the doctor was not available
+            System.out.printf("[%s %s %s, %s[%s, #%s] is not available at slot %s.%n",
+                    doctor.getProfile().getFname(), doctor.getProfile().getLname(),
+                    doctor.getProfile().getDob(), doctor.getLocation(),
+                    doctor.getSpecialty(), doctor.getNpi(), timeslot.getSlotIndex());
+        }
     }
 
     /**
@@ -1013,14 +1040,33 @@ public class ClinicManagerController {
         return true;
     }
 
+    /**
+     * Handles the scheduling of a new imaging appointment for a patient.
+     *
+     * @param firstName        The first name of the patient.
+     * @param lastName         The last name of the patient.
+     * @param appointmentDate   The date of the appointment.
+     * @param timeslot         The timeslot for the appointment.
+     * @param dob              The date of birth of the patient.
+     * @param imagingService    The type of imaging service requested.
+     */
     private void handleImagingAppointment(String firstName, String lastName, Date appointmentDate, Timeslot timeslot, Date dob, String imagingService) {
         Radiology room = Radiology.valueOf(imagingService);
+
+        // Check for duplicate imaging appointment
         if (isDuplicateImagingAppointment(firstName, lastName, dob, appointmentDate, timeslot)) {
+            appendToImagingTextArea(
+                    appointmentDate, timeslot, firstName, lastName, dob, null, null, null, null, 0.0, imagingService
+            );
             System.out.printf("%s %s %s has an existing appointment at the same time slot.%n", firstName, lastName, dob);
             return;
         }
+
         Technician technician = findAvailableTechnician(timeslot, room);
         if (technician == null) {
+            appendToImagingTextArea(
+                    appointmentDate, timeslot, firstName, lastName, dob, null, null, null, null, 0.0, imagingService
+            );
             System.out.printf("Cannot find an available technician at all locations for %s at slot %d.%n", room, timeslot.getSlotIndex());
             return;
         }
@@ -1152,21 +1198,24 @@ public class ClinicManagerController {
      * @param dob              The date of birth of the patient.
      * @param newSlot          The new timeslot to which the appointment will be rescheduled.
      */
-    private void handleRescheduling(String firstName,String lastName, Date appointmentDate, Timeslot oldSlot, Date dob, Timeslot newSlot) {
+    private void handleRescheduling(String firstName, String lastName, Date appointmentDate, Timeslot oldSlot, Date dob, Timeslot newSlot) {
 
         // Find appointment in the old timeslot
         Appointment appointmentToReschedule = findAppointment(appointmentDate, oldSlot, firstName, lastName, dob);
         if (appointmentToReschedule == null) {
-            // Print a message if the appointment does not exist in the old timeslot
-            System.out.printf("%s %s %s %s %s does not exist.%n",
+            String message = String.format("%s %s %s %s %s does not exist.%n",
                     appointmentDate.toString(), oldSlot, firstName, lastName, dob);
+            System.out.printf(message);
+            re_status_messages.appendText(message);
             return;
         }
 
         // Check if there's already an appointment at the new timeslot
         if (isDuplicateAppointment(firstName, lastName, dob, appointmentDate, newSlot)) {
-            System.out.printf("%s %s %s has an existing appointment at %s %s.%n",
+            String message = String.format("%s %s %s has an existing appointment at %s %s.%n",
                     firstName, lastName, dob, appointmentDate, newSlot);
+            System.out.printf(message);
+            re_status_messages.appendText(message);
             return;
         }
 
@@ -1186,8 +1235,15 @@ public class ClinicManagerController {
      */
     private void rescheduleAppointment(Appointment appointmentToReschedule, Timeslot newSlot, Date appointmentDate, String firstName, String lastName, Date dob) {
         appointmentToReschedule.setTimeslot(newSlot);  // Update the timeslot in the appointment
-        System.out.printf("Rescheduled to %s %s %s %s %s %s%n",
+
+        String message = String.format("Rescheduled to %s %s %s %s %s %s%n",
                 appointmentDate.toString(), newSlot, firstName, lastName, dob, appointmentToReschedule.getProvider().toString());
+
+        // Print to terminal
+        System.out.printf(message);
+
+        // Append to the status messages TextArea
+        re_status_messages.appendText(message);
     }
 
     /**
@@ -1479,12 +1535,44 @@ public class ClinicManagerController {
      * @param doctorSpecialty     The specialty of the doctor.
      * @param doctorNpi           The NPI of the doctor.
      */
-    public void appendToOfficeTextArea(Date appointmentDate, Timeslot timeslot, String firstName, String lastName,
-                                       Date dob, String doctorFirstName, String doctorLastName, Date doctorDob,
-                                       Location doctorLocation, Specialty doctorSpecialty, String doctorNpi) {
-        String message = String.format("%s %s %s %s %s [%s %s %s, %s[%s, #%s] booked.",
-                appointmentDate, timeslot, firstName, lastName, dob, doctorFirstName,
-                doctorLastName, doctorDob, doctorLocation.toString(), doctorSpecialty.toString(), doctorNpi);
+    /**
+     * Appends a message detailing the doctor's availability for an office appointment.
+     *
+     * @param appointmentDate       The date of the appointment.
+     * @param timeslot              The timeslot for the appointment.
+     * @param firstName             The first name of the patient.
+     * @param lastName              The last name of the patient.
+     * @param dob                   The date of birth of the patient.
+     * @param doctorFirstName       The first name of the doctor.
+     * @param doctorLastName        The last name of the doctor.
+     * @param doctorDob             The date of birth of the doctor.
+     * @param doctorLocation        The location of the doctor.
+     * @param doctorSpecialty       The specialty of the doctor.
+     * @param doctorNpi             The NPI of the doctor.
+     * @param isAvailable           Indicates whether the doctor is available or not.
+     */
+    public void appendToOfficeTextArea(Date appointmentDate, Timeslot timeslot, String firstName,
+                                       String lastName, Date dob, String doctorFirstName,
+                                       String doctorLastName, Date doctorDob,
+                                       Location doctorLocation, Specialty doctorSpecialty,
+                                       String doctorNpi, boolean isAvailable) {
+        String message;
+        if (isAvailable) {
+            message = String.format("%s %s %s %s %s [%s %s %s, %s[%s, #%s] booked.",
+                    appointmentDate, timeslot, firstName, lastName, dob, doctorFirstName,
+                    doctorLastName, doctorDob, doctorLocation.toString(),
+                    doctorSpecialty.toString(), doctorNpi);
+        } else {
+            // Check if this is a duplicate appointment message
+            if (firstName != null && lastName != null) {
+                message = String.format("%s %s %s already has an existing appointment at slot %s.",
+                        firstName, lastName, dob, timeslot.getSlotIndex());
+            } else {
+                message = String.format("[%s %s %s, %s[%s, #%s] is not available at slot %s.",
+                        doctorFirstName, doctorLastName, doctorDob, doctorLocation.toString(),
+                        doctorSpecialty.toString(), doctorNpi, timeslot.getSlotIndex());
+            }
+        }
         status_messages.appendText(message + "\n");
     }
 
@@ -1503,12 +1591,31 @@ public class ClinicManagerController {
      * @param technicianRate        The rate of the technician.
      * @param imagingService        The specific imaging service requested.
      */
-    public void appendToImagingTextArea(Date appointmentDate, Timeslot timeslot, String firstName, String lastName,
-                                        Date dob, String technicianFirstName, String technicianLastName, Date technicianDob,
-                                        Location technicianLocation, double technicianRate, String imagingService) {
-        String message = String.format("%s %s %s %s %s [%s %s %s, %s[$%.2f][%s]",
-                appointmentDate, timeslot, firstName, lastName, dob, technicianFirstName,
-                technicianLastName, technicianDob, technicianLocation.toString(), technicianRate, imagingService);
+    public void appendToImagingTextArea(Date appointmentDate, Timeslot timeslot, String firstName,
+                                        String lastName, Date dob, String technicianFirstName,
+                                        String technicianLastName, Date technicianDob,
+                                        Location technicianLocation, double technicianRate,
+                                        String imagingService) {
+        String message;
+
+        if (technicianFirstName == null || technicianLastName == null) {
+            // This indicates either a duplicate or no technician available
+            if (firstName != null && lastName != null) {
+                message = String.format("%s %s %s already has an existing imaging appointment at slot %s.",
+                        firstName, lastName, dob, timeslot.getSlotIndex());
+            } else {
+                message = String.format("Cannot find an available technician for imaging service %s at slot %s.",
+                        imagingService, timeslot.getSlotIndex());
+            }
+        } else {
+            // Format for a successful appointment
+            message = String.format("%s %s %s %s %s [%s %s %s, %s[$%.2f][%s] booked.",
+                    appointmentDate, timeslot, firstName, lastName, dob, technicianFirstName,
+                    technicianLastName, technicianDob, technicianLocation.toString(), technicianRate, imagingService);
+        }
+
         imaging_status_messages.appendText(message + "\n");
     }
+
+
 }
