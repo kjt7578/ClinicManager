@@ -21,10 +21,8 @@ public class Sort {
     }
 
     private static void appendText(String text) {
-        System.out.println(text);
-        System.out.println(text);
         if (controller != null) {
-            controller.display_text_area.appendText(text + "\n");
+            controller.appendToDisplayTextArea(text + "\n");
         }
     }
 

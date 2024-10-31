@@ -1,6 +1,7 @@
 package com.example.demo;
 
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import model.project1.*;
 import model.util.*;
 import model.project1.List;
@@ -136,6 +137,21 @@ public class ClinicManagerController {
     @FXML
     public TextArea display_text_area;
 
+    @FXML
+    private TextField cancel_patient_first_name;
+
+    @FXML
+    private TextField cancel_patient_last_name;
+
+    @FXML
+    private DatePicker cancel_appointment_date;
+
+    @FXML
+    private DatePicker cancel_date_of_birth;
+
+    @FXML
+    private ComboBox<String> cancel_timeslot_selection;
+
     private ObservableList<Provider> OBSdoctorList = FXCollections.observableArrayList();
     private ObservableList<Provider> OBStechnicianList = FXCollections.observableArrayList();
     private ObservableList<String> OBSproviderList;
@@ -172,8 +188,6 @@ public class ClinicManagerController {
                 "PC: Display Credit by Provider"
         );
         display_selector.setItems(displayOptions);
-
-        // Set imaging service options
         ObservableList<String> imagingServices = FXCollections.observableArrayList("XRAY", "CATSCAN", "ULTRASOUND");
         imaging_service.setItems(imagingServices);
     }
@@ -323,10 +337,48 @@ public class ClinicManagerController {
         } catch (Exception e) {
             System.out.println("Error: Invalid office appointment command.");
         }
-
-
-        System.out.println("handleSchedule Done");
     }
+
+    //C,2/3/2025,4,john,doe,12/13/1989
+    @FXML
+    private void processCancellation() {
+        String firstName = cancel_patient_first_name.getText();
+        String lastName = cancel_patient_last_name.getText();
+        LocalDate appointmentDateLocal = cancel_appointment_date.getValue();
+        LocalDate dobLocal = cancel_date_of_birth.getValue();
+        String timeslotStr = cancel_timeslot_selection.getValue();
+
+        Date appointmentDate = convertToDate(appointmentDateLocal);
+        Date dob = convertToDate(dobLocal);
+
+        System.out.println("C," + appointmentDate + "," + convertTimeToSlot(timeslotStr) + "," +
+                firstName + "," + lastName + "," + dob);
+
+        if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
+                appointmentDate == null || timeslotStr == null || dob == null) {
+            appendMessage("Fill all fields");
+            System.out.println("Empty field exists");
+            return;
+        }
+
+        try {
+            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate));
+            Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
+            dob = validateDateOfBirth(String.valueOf(dob));
+            if (!validateInputs(appointmentDate, timeslot, dob)) return;
+            Appointment appointmentToCancel = findAppointment(appointmentDate, timeslot, firstName.toLowerCase(), lastName.toLowerCase(), dob);
+
+            if (appointmentToCancel != null) {
+                appointmentList.remove(appointmentToCancel);
+                System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment has been canceled.");
+            } else {
+                System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment does not exist.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error: Invalid cancellation command.");
+        }
+    }
+
 
     private Date convertToDate(LocalDate localDate) {
         if (localDate == null) {
@@ -431,6 +483,42 @@ public class ClinicManagerController {
         display_selector.setOnAction(event -> handleDisplaySelection());
     }
 
+    /**
+     * Processes commands related to sorting appointments.
+     *
+     * @param appointments the list of appointments to manage
+     * @param command      the command string containing the sorting operation to perform
+     */
+    private void processSortingCommand(List<Appointment> appointments, String command) {
+        System.out.println(command);
+        switch (command) {
+            case "PA": // Sort by appointment date, time, then provider's last name
+                Sort.appointment(appointments, 'A');
+                break;
+            case "PP": // Sort by patient (last name, first name, date of birth, appointment date, time)
+                Sort.appointment(appointments, 'P');
+                break;
+            case "PL": // Sort by county name, appointment date, time
+                Sort.appointment(appointments, 'L');
+                break;
+            case "PS": // Display billing statements based on provider's specialty
+                Sort.appointment(appointments, 'S');
+                break;
+            case "PO": // Sort office appointments by county name, date, time
+                Sort.appointment(appointments, 'O');
+                break;
+            case "PI": // Sort imaging appointments by county name, date, time
+                Sort.appointment(appointments, 'I');
+                break;
+            case "PC": // Display expected credit amounts for providers, sorted by provider profile
+                Sort.appointment(appointments, 'C');
+                break;
+            default:
+                System.out.println("Invalid command!");
+                break;
+        }
+    }
+
     @FXML
     private void handleDisplaySelection() {
         String selectedOption = display_selector.getValue();
@@ -442,39 +530,37 @@ public class ClinicManagerController {
         }
         if (selectedOption != null) {
             switch (selectedOption) {
-                case "Sort by Appointment Date":
+                case "PA: Sort by Appointment Date":
                     command = "PA";
                     break;
-                case "Sort by Patient":
+                case "PP: Sort by Patient":
                     command = "PP";
                     break;
-                case "Sort by County":
+                case "PL: Sort by County":
                     command = "PL";
                     break;
-                case "Display Billing by Specialty":
+                case "PS: Display Billing by Specialty":
                     command = "PS";
                     break;
-                case "Sort Office Appointments by County":
+                case "PO: Sort Office Appointments by County":
                     command = "PO";
                     break;
-                case "Sort Imaging Appointments by County":
+                case "PI: Sort Imaging Appointments by County":
                     command = "PI";
                     break;
-                case "Display Credit by Provider":
+                case "PC: Display Credit by Provider":
                     command = "PC";
                     break;
                 default:
-                    appendMessage("Invalid display option selected.");
+                    appendToDisplayTextArea("Invalid display option selected.");
                     return;
             }
 
             processSortingCommand(appointmentList, command);
             System.out.println("Command: " + command);
-            System.out.println("Appointment List Size: " + appointmentList.size());
-
             displayAppointments();
         } else {
-            appendMessage("Please select a display option.");
+            appendToDisplayTextArea("Please select a display option.");
         }
     }
 
@@ -577,7 +663,7 @@ public class ClinicManagerController {
                 processImagingAppointment(tokens);
                 break;
             case "C":
-                processCancellation(tokens);
+                //processCancellation(tokens);
                 break;
             case "R":
                 processReschedule(tokens);
@@ -588,40 +674,7 @@ public class ClinicManagerController {
         }
     }
 
-    /**
-     * Processes commands related to sorting appointments.
-     *
-     * @param appointments the list of appointments to manage
-     * @param command      the command string containing the sorting operation to perform
-     */
-    private void processSortingCommand(List<Appointment> appointments, String command) {
-        switch (command) {
-            case "PA": // Sort by appointment date, time, then provider's last name
-                Sort.appointment(appointments, 'A');
-                break;
-            case "PP": // Sort by patient (last name, first name, date of birth, appointment date, time)
-                Sort.appointment(appointments, 'P');
-                break;
-            case "PL": // Sort by county name, appointment date, time
-                Sort.appointment(appointments, 'L');
-                break;
-            case "PS": // Display billing statements based on provider's specialty
-                Sort.appointment(appointments, 'S');
-                break;
-            case "PO": // Sort office appointments by county name, date, time
-                Sort.appointment(appointments, 'O');
-                break;
-            case "PI": // Sort imaging appointments by county name, date, time
-                Sort.appointment(appointments, 'I');
-                break;
-            case "PC": // Display expected credit amounts for providers, sorted by provider profile
-                Sort.appointment(appointments, 'C');
-                break;
-            default:
-                System.out.println("Invalid command!");
-                break;
-        }
-    }
+
 
     /**
      * Processes a command to create a new office appointment using the provided tokens.
@@ -908,37 +961,6 @@ public class ClinicManagerController {
             }
         }
         return false;
-    }
-
-    /**
-     * Processes the cancellation of an appointment based on the provided details.
-     *
-     * @param tokens an array of strings containing the cancellation command details,
-     *               including appointment date, timeslot, first name, last name, and date of birth
-     */
-    private void processCancellation(String[] tokens) {
-        if (tokens.length != TOKEN_LENGTH_CANCEL) {
-            System.out.println("Missing data tokens.");
-            return;
-        }
-        try {
-            Date appointmentDate = validateAppointmentDate(tokens[1]);
-            Timeslot timeslot = validateTimeslot(tokens[2]);
-            String firstName = tokens[3];
-            String lastName = tokens[4];
-            Date dob = validateDateOfBirth(tokens[5]);
-
-            Appointment appointmentToCancel = findAppointment(appointmentDate, timeslot, firstName.toLowerCase(), lastName.toLowerCase(), dob);
-
-            if (appointmentToCancel != null) {
-                appointmentList.remove(appointmentToCancel);
-                System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment has been canceled.");
-            } else {
-                System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment does not exist.");
-            }
-        } catch (Exception e) {
-            System.out.println("Error: Invalid cancellation command.");
-        }
     }
 
     /**
@@ -1273,4 +1295,14 @@ public class ClinicManagerController {
         }
         return null;
     }
+
+    public void appendToDisplayTextArea(String text) {
+        display_text_area.appendText(text + "\n");
+    }
+
+    public void appendToOfficeTextArea(String text) {
+        status_messages.appendText(text + "\n");
+    }
+
+
 }
