@@ -259,6 +259,7 @@ public class ClinicManagerController {
         addTimeSlots(timeSlots, 7, 12); // Afternoon slots
         office_timeslot_selection.setItems(timeSlots);
         imaging_timeslot_selection.setItems(timeSlots);
+        cancel_timeslot_selection.setItems(timeSlots);
     }
 
     private void addTimeSlots(ObservableList<String> timeSlots, int startSlot, int endSlot) {
@@ -349,10 +350,8 @@ public class ClinicManagerController {
         LocalDate appointmentDateLocal = cancel_appointment_date.getValue();
         LocalDate dobLocal = cancel_date_of_birth.getValue();
         String timeslotStr = cancel_timeslot_selection.getValue();
-
         Date appointmentDate = convertToDate(appointmentDateLocal);
         Date dob = convertToDate(dobLocal);
-
         System.out.println("C," + appointmentDate + "," + convertTimeToSlot(timeslotStr) + "," +
                 firstName + "," + lastName + "," + dob);
 
