@@ -179,6 +179,11 @@ public class ClinicManagerController {
     private ObservableList<String> OBSproviderList;
     private static final String PROVIDERS_FILE_PATH = "providers.txt";
 
+    /**
+     * Initializes the Clinic Manager Controller by setting up lists, loading providers,
+     * and initializing UI components. This method is called when the controller is
+     * first created.
+     */
     @FXML
     public void initialize() {
         providerList = new List<>();
@@ -211,6 +216,10 @@ public class ClinicManagerController {
         imaging_service.setItems(imagingServices);
     }
 
+    /**
+     * Loads provider information from a file and populates the lists for doctors and technicians.
+     * It also updates the UI with the names of the providers and initializes the technician rotation.
+     */
     @FXML
     private void loadProviders() {
         try (Scanner scanner = new Scanner(new File(PROVIDERS_FILE_PATH))) {
@@ -249,6 +258,13 @@ public class ClinicManagerController {
         }
     }
 
+    /**
+     * Parses a provider's information from a given line of text.
+     * Returns a Provider object based on the parsed information or null if the provider type is unrecognized.
+     *
+     * @param line the line of text containing provider information
+     * @return a Provider object (Doctor or Technician) or null if the type is unrecognized
+     */
     private Provider parseProvider(String line) {
         String[] tokens = line.split("\\s+");
         String providerType = tokens[0].toUpperCase();
@@ -271,6 +287,10 @@ public class ClinicManagerController {
         return null;
     }
 
+    /**
+     * Initializes the available time slots for different appointment types by populating
+     * a list of time slots and setting it in the corresponding ComboBoxes in the UI.
+     */
     private void initializeTimeSlots() {
         ObservableList<String> timeSlots = FXCollections.observableArrayList();
         addTimeSlots(timeSlots, 1, 6); // Morning slots
@@ -282,6 +302,15 @@ public class ClinicManagerController {
         re_newtimeslot_selection.setItems(timeSlots);
     }
 
+    /**
+     * Adds time slots to the given list based on a specified start and end range.
+     * Converts each slot number within the range to a Timeslot object and adds its
+     * string representation to the list.
+     *
+     * @param timeSlots the list to which time slots will be added
+     * @param startSlot the starting slot number
+     * @param endSlot the ending slot number
+     */
     private void addTimeSlots(ObservableList<String> timeSlots, int startSlot, int endSlot) {
         for (int i = startSlot; i <= endSlot; i++) {
             Timeslot slot = Timeslot.fromString(Integer.toString(i));
@@ -289,16 +318,30 @@ public class ClinicManagerController {
         }
     }
 
+    /**
+     * Handles the scheduling of an office appointment by calling the
+     * scheduleAppointment method with the type "Office".
+     */
     @FXML
     private void handleScheduleOffice() {
         scheduleAppointment("Office");
     }
 
+    /**
+     * Handles the scheduling of an imaging appointment by calling the
+     * scheduleAppointment method with the type "Imaging".
+     */
     @FXML
     private void handleScheduleImaging() {
         scheduleAppointment("Imaging");
     }
 
+    /**
+     * Schedules an appointment by gathering input data, validating fields,
+     * checking for duplicates, and verifying provider availability.
+     *
+     * @param type the type of appointment ("Office" or "Imaging")
+     */
     private void scheduleAppointment(String type) {
         TextField firstNameField = office_patient_first_name;
         TextField lastNameField = office_patient_last_name;
@@ -361,6 +404,10 @@ public class ClinicManagerController {
         }
     }
 
+    /**
+     * Processes the cancellation of an appointment by gathering input data,
+     * validating fields, and finding the matching appointment in the list.
+     */
     //C,2/3/2025,4,john,doe,12/13/1989
     @FXML
     private void processCancellation() {
@@ -399,7 +446,12 @@ public class ClinicManagerController {
         }
     }
 
-
+    /**
+     * Converts a LocalDate object to a Date object.
+     *
+     * @param localDate the LocalDate to convert
+     * @return the converted Date object, or null if localDate is null
+     */
     private Date convertToDate(LocalDate localDate) {
         if (localDate == null) {
             return null;
@@ -407,6 +459,12 @@ public class ClinicManagerController {
         return new Date(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth());
     }
 
+    /**
+     * Converts a provider's name to their corresponding NPI.
+     *
+     * @param providerName the name of the provider to convert
+     * @return the NPI as a string, or null if the provider name is not recognized
+     */
     private String convertProvicerToSNPI(String providerName) {
         switch (providerName) {
             case "ANDREW PATEL":
@@ -442,6 +500,13 @@ public class ClinicManagerController {
         }
     }
 
+    /**
+     * Converts a given timeslot string (in "HH:MM AM/PM" format) to a corresponding
+     * slot number as a string.
+     *
+     * @param timeslot the timeslot string to convert
+     * @return the corresponding slot number as a string, or null if the timeslot is unrecognized
+     */
     private String convertTimeToSlot(String timeslot) {
         if (timeslot == null) {
             System.out.println("Error: timeslot is null.");
@@ -477,6 +542,12 @@ public class ClinicManagerController {
         }
     }
 
+    /**
+     * Clears input fields in the UI based on the specified appointment type.
+     * Resets all relevant fields to their default or empty states.
+     *
+     * @param type the type of appointment ("Office" or "Imaging")
+     */
     private void clearFields(String type) {
         if (type.equals("Office")) {
             office_patient_first_name.clear();
@@ -492,12 +563,21 @@ public class ClinicManagerController {
         }
     }
 
+    /**
+     * Appends a message to the status messages TextArea in the UI.
+     *
+     * @param message the message to append to the status messages
+     */
     private void appendMessage(String message) {
         Platform.runLater(() -> {
             status_messages.appendText(message + "\n");
         });
     }
 
+    /**
+     * Initializes the display options for the UI by creating a list of options
+     * and setting it to the display_selector ComboBox.
+     */
     private void initializeDisplayOptions() {
         ObservableList<String> displayOptions = FXCollections.observableArrayList();
         displayOptions.add("Show Appointments");
@@ -542,6 +622,11 @@ public class ClinicManagerController {
         }
     }
 
+    /**
+     * Handles the selection of a display option from the display_selector ComboBox.
+     * Depending on the selected option, it processes the corresponding command
+     * to sort or display appointments.
+     */
     @FXML
     private void handleDisplaySelection() {
         String selectedOption = display_selector.getValue();
@@ -587,6 +672,9 @@ public class ClinicManagerController {
         }
     }
 
+    /**
+     * Displays the list of appointments in the display_text_area.
+     */
     private void displayAppointments() {
         if (appointmentList.size() == 0) {
             display_text_area.setText("No appointments to display.");
@@ -696,8 +784,6 @@ public class ClinicManagerController {
                 break;
         }
     }
-
-
 
     /**
      * Processes a command to create a new office appointment using the provided tokens.
@@ -861,6 +947,11 @@ public class ClinicManagerController {
         return false;
     }
 
+    /**
+     * Processes the imaging appointment based on the user's input from the UI.
+     *
+     * @param actionEvent The ActionEvent triggered by the imaging appointment button.
+     */
     @FXML
     private void processImagingAppointment(ActionEvent actionEvent) {
         TextField firstNameField = imaging_patient_first_name;
@@ -997,6 +1088,11 @@ public class ClinicManagerController {
         return false;
     }
 
+    /**
+     * Processes the rescheduling of an existing appointment based on user input from the UI.
+     *
+     * @param actionEvent The ActionEvent triggered by the reschedule button.
+     */
     @FXML
     private void processReschedule(ActionEvent actionEvent){
         TextField firstNameField = re_patient_first_name;
@@ -1038,6 +1134,16 @@ public class ClinicManagerController {
         }
     }
 
+    /**
+     * Handles the rescheduling of an existing appointment.
+     *
+     * @param firstName        The first name of the patient.
+     * @param lastName         The last name of the patient.
+     * @param appointmentDate   The date of the appointment.
+     * @param oldSlot          The original timeslot of the appointment.
+     * @param dob              The date of birth of the patient.
+     * @param newSlot          The new timeslot to which the appointment will be rescheduled.
+     */
     private void handleRescheduling(String firstName,String lastName, Date appointmentDate, Timeslot oldSlot, Date dob, Timeslot newSlot) {
 
         // Find appointment in the old timeslot
@@ -1341,10 +1447,30 @@ public class ClinicManagerController {
         return null;
     }
 
+    /**
+     * Appends a given text to the display text area, adding a newline after the text.
+     *
+     * @param text The text to be appended to the display text area.
+     */
     public void appendToDisplayTextArea(String text) {
         display_text_area.appendText(text + "\n");
     }
 
+    /**
+     * Appends a message detailing the office appointment to the status messages area.
+     *
+     * @param appointmentDate     The date of the appointment.
+     * @param timeslot            The timeslot of the appointment.
+     * @param firstName          The first name of the patient.
+     * @param lastName           The last name of the patient.
+     * @param dob                The date of birth of the patient.
+     * @param doctorFirstName     The first name of the doctor.
+     * @param doctorLastName      The last name of the doctor.
+     * @param doctorDob           The date of birth of the doctor.
+     * @param doctorLocation      The location of the doctor.
+     * @param doctorSpecialty     The specialty of the doctor.
+     * @param doctorNpi           The NPI of the doctor.
+     */
     public void appendToOfficeTextArea(Date appointmentDate, Timeslot timeslot, String firstName, String lastName,
                                        Date dob, String doctorFirstName, String doctorLastName, Date doctorDob,
                                        Location doctorLocation, Specialty doctorSpecialty, String doctorNpi) {
@@ -1354,6 +1480,21 @@ public class ClinicManagerController {
         status_messages.appendText(message + "\n");
     }
 
+    /**
+     * Appends a message detailing the imaging appointment to the imaging status messages area.
+     *
+     * @param appointmentDate       The date of the appointment.
+     * @param timeslot              The timeslot of the appointment.
+     * @param firstName            The first name of the patient.
+     * @param lastName             The last name of the patient.
+     * @param dob                  The date of birth of the patient.
+     * @param technicianFirstName    The first name of the technician.
+     * @param technicianLastName     The last name of the technician.
+     * @param technicianDob         The date of birth of the technician.
+     * @param technicianLocation    The location of the technician.
+     * @param technicianRate        The rate of the technician.
+     * @param imagingService        The specific imaging service requested.
+     */
     public void appendToImagingTextArea(Date appointmentDate, Timeslot timeslot, String firstName, String lastName,
                                         Date dob, String technicianFirstName, String technicianLastName, Date technicianDob,
                                         Location technicianLocation, double technicianRate, String imagingService) {
