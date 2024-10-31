@@ -1,6 +1,7 @@
 package com.example.demo;
 
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import model.project1.*;
 import model.util.*;
 import model.project1.List;
@@ -128,10 +129,28 @@ public class ClinicManagerController {
     private ComboBox<String> imaging_provider_selection;
 
     @FXML
+    private ComboBox<String> imaging_service;
+
+    @FXML
     private ComboBox<String> display_selector;
 
     @FXML
     public TextArea display_text_area;
+
+    @FXML
+    private TextField cancel_patient_first_name;
+
+    @FXML
+    private TextField cancel_patient_last_name;
+
+    @FXML
+    private DatePicker cancel_appointment_date;
+
+    @FXML
+    private DatePicker cancel_date_of_birth;
+
+    @FXML
+    private ComboBox<String> cancel_timeslot_selection;
 
     private ObservableList<Provider> OBSdoctorList = FXCollections.observableArrayList();
     private ObservableList<Provider> OBStechnicianList = FXCollections.observableArrayList();
@@ -169,6 +188,8 @@ public class ClinicManagerController {
                 "PC: Display Credit by Provider"
         );
         display_selector.setItems(displayOptions);
+        ObservableList<String> imagingServices = FXCollections.observableArrayList("XRAY", "CATSCAN", "ULTRASOUND");
+        imaging_service.setItems(imagingServices);
     }
 
     @FXML
@@ -319,6 +340,47 @@ public class ClinicManagerController {
             System.out.println("Error: Invalid office appointment command.");
         }
     }
+
+    //C,2/3/2025,4,john,doe,12/13/1989
+    @FXML
+    private void processCancellation() {
+        String firstName = cancel_patient_first_name.getText();
+        String lastName = cancel_patient_last_name.getText();
+        LocalDate appointmentDateLocal = cancel_appointment_date.getValue();
+        LocalDate dobLocal = cancel_date_of_birth.getValue();
+        String timeslotStr = cancel_timeslot_selection.getValue();
+
+        Date appointmentDate = convertToDate(appointmentDateLocal);
+        Date dob = convertToDate(dobLocal);
+
+        System.out.println("C," + appointmentDate + "," + convertTimeToSlot(timeslotStr) + "," +
+                firstName + "," + lastName + "," + dob);
+
+        if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
+                appointmentDate == null || timeslotStr == null || dob == null) {
+            appendMessage("Fill all fields");
+            System.out.println("Empty field exists");
+            return;
+        }
+
+        try {
+            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate));
+            Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
+            dob = validateDateOfBirth(String.valueOf(dob));
+            if (!validateInputs(appointmentDate, timeslot, dob)) return;
+            Appointment appointmentToCancel = findAppointment(appointmentDate, timeslot, firstName.toLowerCase(), lastName.toLowerCase(), dob);
+
+            if (appointmentToCancel != null) {
+                appointmentList.remove(appointmentToCancel);
+                System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment has been canceled.");
+            } else {
+                System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment does not exist.");
+            }
+        } catch (Exception e) {
+            System.out.println("Error: Invalid cancellation command.");
+        }
+    }
+
 
     private Date convertToDate(LocalDate localDate) {
         if (localDate == null) {
@@ -603,7 +665,7 @@ public class ClinicManagerController {
                 processImagingAppointment(tokens);
                 break;
             case "C":
-                processCancellation(tokens);
+                //processCancellation(tokens);
                 break;
             case "R":
                 processReschedule(tokens);
@@ -901,37 +963,6 @@ public class ClinicManagerController {
             }
         }
         return false;
-    }
-
-    /**
-     * Processes the cancellation of an appointment based on the provided details.
-     *
-     * @param tokens an array of strings containing the cancellation command details,
-     *               including appointment date, timeslot, first name, last name, and date of birth
-     */
-    private void processCancellation(String[] tokens) {
-        if (tokens.length != TOKEN_LENGTH_CANCEL) {
-            System.out.println("Missing data tokens.");
-            return;
-        }
-        try {
-            Date appointmentDate = validateAppointmentDate(tokens[1]);
-            Timeslot timeslot = validateTimeslot(tokens[2]);
-            String firstName = tokens[3];
-            String lastName = tokens[4];
-            Date dob = validateDateOfBirth(tokens[5]);
-
-            Appointment appointmentToCancel = findAppointment(appointmentDate, timeslot, firstName.toLowerCase(), lastName.toLowerCase(), dob);
-
-            if (appointmentToCancel != null) {
-                appointmentList.remove(appointmentToCancel);
-                System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment has been canceled.");
-            } else {
-                System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment does not exist.");
-            }
-        } catch (Exception e) {
-            System.out.println("Error: Invalid cancellation command.");
-        }
     }
 
     /**
@@ -1274,4 +1305,6 @@ public class ClinicManagerController {
     public void appendToOfficeTextArea(String text) {
         status_messages.appendText(text + "\n");
     }
+
+
 }
