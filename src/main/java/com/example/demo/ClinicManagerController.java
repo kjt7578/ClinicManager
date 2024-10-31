@@ -982,12 +982,22 @@ public class ClinicManagerController {
 
     @FXML
     private void processReschedule(ActionEvent actionEvent){
-        String firstName = re_patient_first_name.getText();
-        String lastName = re_patient_last_name.getText();
-        LocalDate appointmentDateLocal = re_appointment_date.getValue();
-        LocalDate dobLocal = re_date_of_birth.getValue();
-        String oldTimeslotStr = re_timeslot_selection.getValue();
-        String newTimeslotStr = re_newtimeslot_selection.getValue();
+        TextField firstNameField = re_patient_first_name;
+        TextField lastNameField = re_patient_last_name;
+        DatePicker appointmentDatePicker = re_appointment_date;
+        DatePicker dobPicker =  re_date_of_birth;
+        ComboBox<String> oldtimeslotSelection = re_timeslot_selection;
+        ComboBox<String> newtimeslotSelection = re_newtimeslot_selection;
+
+        String firstName = firstNameField.getText();
+        String lastName = lastNameField.getText();
+        LocalDate appointmentDateLocal = appointmentDatePicker.getValue();
+        String oldTimeslotStr = oldtimeslotSelection.getValue();
+        String newTimeslotStr = newtimeslotSelection.getValue();
+        LocalDate dobLocal = dobPicker.getValue();
+
+        Date appointmentDate = convertToDate(appointmentDateLocal);
+        Date dob = convertToDate(dobLocal);
 
         if (firstName == null || firstName.isEmpty() ||
                 lastName == null || lastName.isEmpty() ||
@@ -997,15 +1007,13 @@ public class ClinicManagerController {
             return;
         }
 
+        System.out.println("R," + appointmentDate + "," + convertTimeToSlot(oldTimeslotStr) + "," +
+                firstName + "," + lastName + "," + dob + "," + convertTimeToSlot(newTimeslotStr));
+
         try {
-            Date appointmentDate = validateAppointmentDate(appointmentDateLocal.toString());
             Timeslot oldSlot = validateTimeslot(convertTimeToSlot(oldTimeslotStr));
-            Date dob = validateDateOfBirth(dobLocal.toString());
             Timeslot newSlot = validateTimeslot(convertTimeToSlot(newTimeslotStr));
             if (!validateInputs(appointmentDate, oldSlot, dob, newSlot)) return;
-
-            System.out.println("R," + appointmentDate + "," + convertTimeToSlot(oldTimeslotStr) + "," +
-                    firstName + "," + lastName + "," + dob + "," + convertTimeToSlot(newTimeslotStr));
 
             handleRescheduling(firstName, lastName, appointmentDate, oldSlot, dob, newSlot);
         } catch (Exception e) {

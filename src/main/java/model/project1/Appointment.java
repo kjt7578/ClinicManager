@@ -136,7 +136,7 @@ public class Appointment implements Comparable<Appointment> {
                 providerInfo);
     }
 
-    public void setTimeslot(Timeslot newSlot) {
-
+    public void setTimeslot(Timeslot newTimeslot) {
+        this.timeslot = newTimeslot;
     }
 }
