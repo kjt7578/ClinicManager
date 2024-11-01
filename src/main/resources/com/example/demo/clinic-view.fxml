@@ -272,12 +272,8 @@
                 <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                         <children>
-                            <TableView fx:id="providerTable" layoutX="46.0" layoutY="12.0" prefHeight="293.0" prefWidth="610.0">
+                            <TableView fx:id="providerTable" layoutX="248.0" layoutY="12.0" prefHeight="293.0" prefWidth="206.0">
                                 <columns>
-                                    <TableColumn fx:id="firstNameColumn" prefWidth="116.0" text="First Name" />
-                                    <TableColumn fx:id="lastNameColumn" prefWidth="100.0" text="Last Name" />
-                                    <TableColumn fx:id="dobColumn" prefWidth="106.0" text="Dob" />
-                                    <TableColumn fx:id="townColumn" prefWidth="84.0" text="Town" />
                                     <TableColumn fx:id="countyColumn" prefWidth="98.0" text="County" />
                                     <TableColumn fx:id="zipColumn" prefWidth="107.0" text="Zip" />
                                 </columns>

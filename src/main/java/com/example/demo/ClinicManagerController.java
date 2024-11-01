@@ -1,6 +1,7 @@
 package com.example.demo;
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import model.project1.*;
 import model.util.*;
@@ -186,8 +187,18 @@ public class ClinicManagerController {
     @FXML
     private TextArea re_status_messages;
 
+    @FXML
+    private TableColumn<Provider, String> countyColumn;
+
+    @FXML
+    private TableColumn<Provider, String> zipColumn;
+
+    @FXML
+    private TableView<Provider> providerTable;
+
     private ObservableList<Provider> OBSdoctorList = FXCollections.observableArrayList();
     private ObservableList<Provider> OBStechnicianList = FXCollections.observableArrayList();
+    private ObservableList<Provider> providerData = FXCollections.observableArrayList();
     private ObservableList<String> OBSproviderList;
     private static final String PROVIDERS_FILE_PATH = "providers.txt";
 
@@ -207,6 +218,9 @@ public class ClinicManagerController {
         loadProviders();
         int MAX_TECHNICIANS = technicianRotationList.size();
         technicianAssigned = new boolean[MAX_TIMESLOTS][MAX_TECHNICIANS];
+        countyColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getLocation().getCounty()));
+        zipColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getLocation().getZipCode()));
+
 
         printTechnicianRotation();
         appointmentList = new List<>();
@@ -239,16 +253,37 @@ public class ClinicManagerController {
                 String line = scanner.nextLine().trim();
                 if (!line.isEmpty()) {
                     Provider provider = parseProvider(line);
-                    if (provider instanceof Doctor) {
-                        OBSdoctorList.add(provider);
-                    } else if (provider instanceof Technician) {
-                        OBStechnicianList.add(provider);
-                    }
-                    if (provider != null) {
-                        providerList.add(provider);
-                    }
+                        if (provider instanceof Doctor) {
+                            OBSdoctorList.add(provider);
+                        } else if (provider instanceof Technician) {
+                            OBStechnicianList.add(provider);
+                        }
+                        if (provider != null) {
+                            providerList.add(provider);
+                        }
                 }
             }
+
+            List<Location> uniqueLocations = new List<>();
+            for (int i = 0; i < providerList.size(); i++) {
+                Provider provider = providerList.get(i);
+                Location loc = provider.getLocation();
+                boolean isDuplicate = false;
+
+                for (int j = 0; j < uniqueLocations.size(); j++) {
+                    if (uniqueLocations.get(j).equals(loc)) {
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+
+                if (!isDuplicate) {
+                    uniqueLocations.add(loc);
+                    providerData.add(provider);
+                }
+            }
+
+            providerTable.setItems(providerData);
 
             ObservableList<String> doctorNames = FXCollections.observableArrayList();
             for (Provider doctor : OBSdoctorList) {
@@ -261,6 +296,7 @@ public class ClinicManagerController {
                 technicianNames.add(technician.getProfile().getFname() + " " + technician.getProfile().getLname() + " (" + technician.getLocation().name() + ")");
             }
 
+            providerTable.setItems(providerData);
             createTechnicianRotation();
             Sort.provider(providerList);
             displayProviders();
