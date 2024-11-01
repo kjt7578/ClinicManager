@@ -37,7 +37,6 @@ public class Sort {
      */
     public static void appointment(List<Appointment> list, char key) {
         if (list == null || list.size() == 0) {
-            System.out.println("Schedule calendar is empty.");
             appendText("Schedule calendar is empty.");
             return;
         }
@@ -57,13 +56,11 @@ public class Sort {
             case 'O':
                 sortNonTechnicianAppointmentsByCountyDateTime(list);
                 printNonTechnicianAppointments(list, "** List of office appointments, ordered by county/date/time.");
-                System.out.println("** end of list **");
                 appendText("** end of list **");
                 break;
             case 'I':
                 sortImagingAppointmentsByCountyDateTime(list);
                 printImagingAppointments(list, "** List of radiology appointments, ordered by county/date/time.");
-                System.out.println("** end of list **");
                 appendText("** end of list **");
                 break;
             case 'S':
@@ -112,19 +109,12 @@ public class Sort {
                 count++;
             }
         }
-
         DecimalFormat df = new DecimalFormat("#,###.00");
-
-
-        // Print the billing statement
-        System.out.println("** Billing statement ordered by patient. **");
 
         for (int i = 0; i < count; i++) {
             String line = String.format("(%d) %s [due: $%s]", (i + 1), patientNames[i], df.format(totalDueAmounts[i]));
-            System.out.println(line);
             appendText(line);
         }
-        System.out.println("** end of list **");
 
         // Clear the list of appointments after printing
         clearList(list);
@@ -211,16 +201,13 @@ public class Sort {
             }
         }
 
-        System.out.println("** Credit amount ordered by provider.");
         appendText("** Credit amount ordered by provider.");
         for (int i = 0; i < count; i++) {
             Provider provider = (Provider) tempAppointments[i].getProvider();
             double totalCredit = totalCredits[i]; // Use the aggregated total credit
             String line = String.format("(%d) %s [credit amount: $%.2f]", (i + 1), provider.getProfile(), totalCredit);
-            System.out.println(line);
             appendText(line);
         }
-        System.out.println("** end of list **");
         appendText("** end of list **");
     }
 
@@ -251,21 +238,17 @@ public class Sort {
      * @param label the label or message to display before printing
      */
     private static void printNonTechnicianAppointments(List<Appointment> list, String label) {
-        System.out.println(label);
         appendText(label);
         boolean hasNonTechnicianAppointments = false;
 
         for (Appointment appointment : list) {
             // Print only if the provider is NOT a Technician
             if (!(appointment.getProvider() instanceof Technician)) {
-                System.out.println(appointment);
                 appendText(String.valueOf(appointment));
                 hasNonTechnicianAppointments = true;
             }
         }
-
         if (!hasNonTechnicianAppointments) {
-            System.out.println("No non-technician office appointments available.");
             appendText("No non-technician office appointments available.");
         }
     }
@@ -333,20 +316,17 @@ public class Sort {
      * @param label the label or message to display before printing
      */
     private static void printImagingAppointments(List<Appointment> list, String label) {
-        System.out.println(label);
         appendText(label);
         boolean hasImagingAppointments = false;
 
         for (Appointment appointment : list) {
             if (appointment instanceof Imaging) {
-                System.out.println(appointment); // Adjust formatting as needed
                 appendText(String.valueOf(appointment));
                 hasImagingAppointments = true;
             }
         }
 
         if (!hasImagingAppointments) {
-            System.out.println("No imaging appointments available.");
             appendText("No imaging appointments available.");
         }
     }
@@ -516,13 +496,10 @@ public class Sort {
      * @param header the header to display before the appointments
      */
     private static void printAppointments(List<Appointment> list, String header) {
-        System.out.println("** " + header);
         appendText("** " + header);
         for (Appointment appointment : list) {
-            System.out.println(appointment);
             appendText(String.valueOf(appointment));
         }
-        System.out.println("** end of list **");
         appendText("** end of list **");
     }
 
