@@ -222,25 +222,21 @@ public class ClinicManagerController {
         appointmentList = new List<>();
         technicianRotationList = new List<>();
         technicianRotationIndex = INITIAL_ROTATION_INDEX;
-
         OBSproviderList = FXCollections.observableArrayList();
         loadProviders();
         int MAX_TECHNICIANS = technicianRotationList.size();
         technicianAssigned = new boolean[MAX_TIMESLOTS][MAX_TECHNICIANS];
         countyColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getLocation().getCounty()));
         zipColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getLocation().getZipCode()));
-
         imagingGroup = new ToggleGroup();
         XRAY_button.setToggleGroup(imagingGroup);
         CATSCAN_button.setToggleGroup(imagingGroup);
         ULTRASOUND_button.setToggleGroup(imagingGroup);
-
         printTechnicianRotation();
         appointmentList = new List<>();
         initializeTimeSlots();
         initializeDisplayOptions();
         Sort.setController(this);
-
         ObservableList<String> displayOptions = FXCollections.observableArrayList(
                 "PA: Sort by Appointment Date",
                 "PP: Sort by Patient",
@@ -259,63 +255,97 @@ public class ClinicManagerController {
      */
     @FXML
     private void loadProviders() {
+        loadProviderDataFromFile();
+        initializeUniqueLocations();
+        updateUIWithProviderData();
+    }
+
+    /**
+     * Loads provider data from the file and populates the lists for doctors and technicians.
+     */
+    private void loadProviderDataFromFile() {
         try (Scanner scanner = new Scanner(new File(PROVIDERS_FILE_PATH))) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine().trim();
                 if (!line.isEmpty()) {
                     Provider provider = parseProvider(line);
-                        if (provider instanceof Doctor) {
-                            OBSdoctorList.add(provider);
-                        } else if (provider instanceof Technician) {
-                            OBStechnicianList.add(provider);
-                        }
-                        if (provider != null) {
-                            providerList.add(provider);
-                        }
+                    addProviderToLists(provider);
                 }
             }
-
-            List<Location> uniqueLocations = new List<>();
-            for (int i = 0; i < providerList.size(); i++) {
-                Provider provider = providerList.get(i);
-                Location loc = provider.getLocation();
-                boolean isDuplicate = false;
-
-                for (int j = 0; j < uniqueLocations.size(); j++) {
-                    if (uniqueLocations.get(j).equals(loc)) {
-                        isDuplicate = true;
-                        break;
-                    }
-                }
-
-                if (!isDuplicate) {
-                    uniqueLocations.add(loc);
-                    providerData.add(provider);
-                }
-            }
-
-            providerTable.setItems(providerData);
-
-            ObservableList<String> doctorNames = FXCollections.observableArrayList();
-            for (Provider doctor : OBSdoctorList) {
-                doctorNames.add(doctor.getProfile().getFname() + " " + doctor.getProfile().getLname() + " (" + doctor.getLocation().name() + ")");
-            }
-            office_provider_selection.setItems(doctorNames);
-
-            ObservableList<String> technicianNames = FXCollections.observableArrayList();
-            for (Provider technician : OBStechnicianList) {
-                technicianNames.add(technician.getProfile().getFname() + " " + technician.getProfile().getLname() + " (" + technician.getLocation().name() + ")");
-            }
-
-            providerTable.setItems(providerData);
-            createTechnicianRotation();
-            Sort.provider(providerList);
-            displayProviders();
-
         } catch (FileNotFoundException e) {
             appendMessage("Error: " + PROVIDERS_FILE_PATH + " cannot be found.");
         }
     }
+
+    /**
+     * Adds a provider to the respective lists for doctors, technicians, and general providers.
+     *
+     * @param provider the provider object to add
+     */
+    private void addProviderToLists(Provider provider) {
+        if (provider instanceof Doctor) {
+            OBSdoctorList.add(provider);
+        } else if (provider instanceof Technician) {
+            OBStechnicianList.add(provider);
+        }
+        if (provider != null) {
+            providerList.add(provider);
+        }
+    }
+
+    /**
+     * Initializes unique locations from the provider list to avoid duplicates.
+     */
+    private void initializeUniqueLocations() {
+        List<Location> uniqueLocations = new List<>();
+        for (Provider provider : providerList) {
+            Location loc = provider.getLocation();
+            if (!isDuplicateLocation(uniqueLocations, loc)) {
+                uniqueLocations.add(loc);
+                providerData.add(provider);
+            }
+        }
+    }
+
+    /**
+     * Checks if a location is already in the list of unique locations.
+     *
+     * @param uniqueLocations list of unique locations
+     * @param loc location to check
+     * @return true if the location is duplicate, false otherwise
+     */
+    private boolean isDuplicateLocation(List<Location> uniqueLocations, Location loc) {
+        for (Location uniqueLoc : uniqueLocations) {
+            if (uniqueLoc.equals(loc)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Updates the UI with provider data, sets ComboBox items, and initializes the technician rotation.
+     */
+    private void updateUIWithProviderData() {
+        providerTable.setItems(providerData);
+
+        ObservableList<String> doctorNames = FXCollections.observableArrayList();
+        for (Provider doctor : OBSdoctorList) {
+            doctorNames.add(doctor.getProfile().getFname() + " " + doctor.getProfile().getLname() + " (" + doctor.getLocation().name() + ")");
+        }
+        office_provider_selection.setItems(doctorNames);
+
+        ObservableList<String> technicianNames = FXCollections.observableArrayList();
+        for (Provider technician : OBStechnicianList) {
+            technicianNames.add(technician.getProfile().getFname() + " " + technician.getProfile().getLname() + " (" + technician.getLocation().name() + ")");
+        }
+
+        providerTable.setItems(providerData);
+        createTechnicianRotation();
+        Sort.provider(providerList);
+        displayProviders();
+    }
+
 
     /**
      * Parses a provider's information from a given line of text.
@@ -402,62 +432,119 @@ public class ClinicManagerController {
      * @param type the type of appointment ("Office" or "Imaging")
      */
     private void scheduleAppointment(String type) {
-        TextField firstNameField = office_patient_first_name;
-        TextField lastNameField = office_patient_last_name;
-        DatePicker appointmentDatePicker = office_appointment_date;
-        DatePicker dobPicker =  office_date_of_birth;
-        ComboBox<String> timeslotSelection = office_timeslot_selection;
-        ComboBox<String> providerSelection = office_provider_selection;
-
-        String firstName = firstNameField.getText();
-        String lastName = lastNameField.getText();
-        LocalDate appointmentDateLocal = appointmentDatePicker.getValue();
-        String timeslotStr = timeslotSelection.getValue();
-        String providerName = providerSelection.getValue();
-        LocalDate dobLocal = dobPicker.getValue();
-
-        if (providerName != null) {
-            providerName = providerName.split(" \\(")[0];
-        }
-        Date appointmentDate = convertToDate(appointmentDateLocal);
-        Date dob = convertToDate(dobLocal);
-
-        if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
-                appointmentDate == null || timeslotStr == null || providerName == null || dob == null) {
+        AppointmentData data = gatherAppointmentData();
+        if (data == null) {
             appendMessage("Fill all fields");
             return;
         }
 
+        if (!validateAndCheckAvailability(data)) return;
+
+        createNewAppointment(data.firstName, data.lastName, data.dob, data.appointmentDate, data.timeslot, data.doctor, true);
+    }
+
+    /**
+     * Gathers input data for the appointment.
+     *
+     * @return an AppointmentData object containing the input data, or null if any field is missing
+     */
+    private AppointmentData gatherAppointmentData() {
+        String firstName = office_patient_first_name.getText();
+        String lastName = office_patient_last_name.getText();
+        LocalDate appointmentDateLocal = office_appointment_date.getValue();
+        String timeslotStr = office_timeslot_selection.getValue();
+        String providerName = office_provider_selection.getValue();
+        LocalDate dobLocal = office_date_of_birth.getValue();
+
+        if (providerName != null) {
+            providerName = providerName.split(" \\(")[0];
+        }
+
+        Date appointmentDate = convertToDate(appointmentDateLocal);
+        Date dob = convertToDate(dobLocal);
+
+        if (isAnyFieldEmpty(firstName, lastName, appointmentDate, timeslotStr, providerName, dob)) {
+            return null;
+        }
+
+        return new AppointmentData(firstName, lastName, appointmentDate, dob, timeslotStr, providerName);
+    }
+
+    /**
+     * Validates appointment data, checks for duplicates, and verifies provider availability.
+     *
+     * @param data the AppointmentData object containing the data to validate
+     * @return true if data is valid and the provider is available, false otherwise
+     */
+    private boolean validateAndCheckAvailability(AppointmentData data) {
         try {
-            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate),status_messages);
-            Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
-            dob = validateDateOfBirth(String.valueOf(dob),status_messages);
-            if (!validateInputs(appointmentDate, timeslot, dob)) return;
-            Doctor doctor = getDoctorByNPI(convertProvicerToSNPI(providerName));
-            if (doctor == null) return;
+            data.appointmentDate = validateAppointmentDate(String.valueOf(data.appointmentDate), status_messages);
+            data.timeslot = validateTimeslot(convertTimeToSlot(data.timeslotStr));
+            data.dob = validateDateOfBirth(String.valueOf(data.dob), status_messages);
+            if (!validateInputs(data.appointmentDate, data.timeslot, data.dob)) return false;
+            data.doctor = getDoctorByNPI(convertProvicerToSNPI(data.providerName));
+            if (data.doctor == null) return false;
 
-            // Check for duplicate appointment
-            if (isDuplicateAppointment(firstName, lastName, dob, appointmentDate, timeslot)) {
-                appendToOfficeTextArea(
-                        appointmentDate, timeslot, firstName, lastName, dob, doctor.getProfile().getFname(), doctor.getProfile().getLname(), doctor.getDateOfBirth(), doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi(), false  // This indicates that the appointment is a duplicate
-                );
-                return;  // Stop further processing since it's a duplicate
+            if (isDuplicateAppointment(data.firstName, data.lastName, data.dob, data.appointmentDate, data.timeslot)) {
+                appendToOfficeTextArea(data.appointmentDate, data.timeslot, data.firstName, data.lastName, data.dob,
+                        data.doctor.getProfile().getFname(), data.doctor.getProfile().getLname(),
+                        data.doctor.getDateOfBirth(), data.doctor.getLocation(),
+                        data.doctor.getSpecialty(), data.doctor.getNpi(), false);
+                return false;
             }
 
-            // Check if the doctor is unavailable at the given time
-            if (isDoctorUnavailable(doctor, appointmentDate, timeslot)) {
-                appendToOfficeTextAreaUnav(
-                        appointmentDate, timeslot, firstName, lastName, dob, doctor.getProfile().getFname(), doctor.getProfile().getLname(), doctor.getDateOfBirth(), doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi(), false  // This indicates that the doctor is not available
-                );
-                return;
+            if (isDoctorUnavailable(data.doctor, data.appointmentDate, data.timeslot)) {
+                appendToOfficeTextAreaUnav(data.appointmentDate, data.timeslot, data.firstName, data.lastName, data.dob,
+                        data.doctor.getProfile().getFname(), data.doctor.getProfile().getLname(),
+                        data.doctor.getDateOfBirth(), data.doctor.getLocation(),
+                        data.doctor.getSpecialty(), data.doctor.getNpi(), false);
+                return false;
             }
 
-            // Create the new appointment and add it to the appointment list
-            createNewAppointment(firstName, lastName, dob, appointmentDate, timeslot, doctor, true);
-
+            return true;
         } catch (Exception e) {
+            return false;
         }
     }
+
+    /**
+     * Checks if any of the provided fields are empty or null.
+     *
+     * @param fields the fields to check
+     * @return true if any field is empty or null, false otherwise
+     */
+    private boolean isAnyFieldEmpty(Object... fields) {
+        for (Object field : fields) {
+            if (field == null || field.toString().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Data class to hold appointment details.
+     */
+    private static class AppointmentData {
+        String firstName;
+        String lastName;
+        Date appointmentDate;
+        Date dob;
+        String timeslotStr;
+        String providerName;
+        Timeslot timeslot;
+        Doctor doctor;
+
+        AppointmentData(String firstName, String lastName, Date appointmentDate, Date dob, String timeslotStr, String providerName) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.appointmentDate = appointmentDate;
+            this.dob = dob;
+            this.timeslotStr = timeslotStr;
+            this.providerName = providerName;
+        }
+    }
+
 
     /**
      * Processes the cancellation of an appointment by gathering input data,
@@ -479,7 +566,6 @@ public class ClinicManagerController {
             cancel_status_messages.appendText("Fill all fields");
             return;
         }
-
         try {
             appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate),cancel_status_messages);
             Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
@@ -511,6 +597,7 @@ public class ClinicManagerController {
         return new Date(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth());
     }
 
+
     /**
      * Converts a provider's name to their corresponding NPI.
      *
@@ -518,38 +605,21 @@ public class ClinicManagerController {
      * @return the NPI as a string, or null if the provider name is not recognized
      */
     private String convertProvicerToSNPI(String providerName) {
-        switch (providerName) {
-            case "ANDREW PATEL":
-                return "01";
-            case "RACHAEL LIM":
-                return "23";
-            case "MONICA ZIMNES":
-                return "11";
-            case "JOHN HARPER":
-                return "32";
-            case "TOM KAUR":
-                return "54";
-            case "ERIC TAYLOR":
-                return "91";
-            case "BEN RAMESH":
-                return "39";
-            case "JUSTIN CERAVOLO":
-                return "09";
-            case "GARY JOHNSON":
-                return "85";
-            case "BEN JERRY":
-                return "77";
-            case "FRANK LIN":
-                return "120";
-            case "CHARLES BROWN":
-                return "100";
-            case "MONICA FOX":
-                return "130";
-            case "JENNY PATEL":
-                return "125";
-            default:
-                return null;
-        }
+        if ("ANDREW PATEL".equals(providerName)) return "01";
+        else if ("RACHAEL LIM".equals(providerName)) return "23";
+        else if ("MONICA ZIMNES".equals(providerName)) return "11";
+        else if ("JOHN HARPER".equals(providerName)) return "32";
+        else if ("TOM KAUR".equals(providerName)) return "54";
+        else if ("ERIC TAYLOR".equals(providerName)) return "91";
+        else if ("BEN RAMESH".equals(providerName)) return "39";
+        else if ("JUSTIN CERAVOLO".equals(providerName)) return "09";
+        else if ("GARY JOHNSON".equals(providerName)) return "85";
+        else if ("BEN JERRY".equals(providerName)) return "77";
+        else if ("FRANK LIN".equals(providerName)) return "120";
+        else if ("CHARLES BROWN".equals(providerName)) return "100";
+        else if ("MONICA FOX".equals(providerName)) return "130";
+        else if ("JENNY PATEL".equals(providerName)) return "125";
+        else return null;
     }
 
     /**
@@ -676,45 +746,42 @@ public class ClinicManagerController {
     @FXML
     private void handleDisplaySelection() {
         display_text_area.clear();
-        String selectedOption = display_selector.getValue();
-        String command = "";
 
-        if (appointmentList.size() == 0) {
+        if (appointmentList.isEmpty()) {
             display_text_area.setText("No appointments to display.");
             return;
         }
+
+        String selectedOption = display_selector.getValue();
         if (selectedOption != null) {
-            switch (selectedOption) {
-                case "PA: Sort by Appointment Date":
-                    command = "PA";
-                    break;
-                case "PP: Sort by Patient":
-                    command = "PP";
-                    break;
-                case "PL: Sort by County":
-                    command = "PL";
-                    break;
-                case "PS: Display Billing by Specialty":
-                    command = "PS";
-                    break;
-                case "PO: Sort Office Appointments by County":
-                    command = "PO";
-                    break;
-                case "PI: Sort Imaging Appointments by County":
-                    command = "PI";
-                    break;
-                case "PC: Display Credit by Provider":
-                    command = "PC";
-                    break;
-                default:
-                    appendToDisplayTextArea("Invalid display option selected.");
-                    return;
+            String command = getCommandFromOption(selectedOption);
+            if (command != null) {
+                processSortingCommand(appointmentList, command);
+            } else {
+                appendToDisplayTextArea("Invalid display option selected.");
             }
-            processSortingCommand(appointmentList, command);
         } else {
             appendToDisplayTextArea("Please select a display option.");
         }
     }
+
+    /**
+     * Maps selected option to the corresponding command.
+     *
+     * @param selectedOption the selected option from the ComboBox
+     * @return the corresponding command string, or null if invalid
+     */
+    private String getCommandFromOption(String selectedOption) {
+        if ("PA: Sort by Appointment Date".equals(selectedOption)) return "PA";
+        else if ("PP: Sort by Patient".equals(selectedOption)) return "PP";
+        else if ("PL: Sort by County".equals(selectedOption)) return "PL";
+        else if ("PS: Display Billing by Specialty".equals(selectedOption)) return "PS";
+        else if ("PO: Sort Office Appointments by County".equals(selectedOption)) return "PO";
+        else if ("PI: Sort Imaging Appointments by County".equals(selectedOption)) return "PI";
+        else if ("PC: Display Credit by Provider".equals(selectedOption)) return "PC";
+        else return null;
+    }
+
 
     /**
      * Displays the list of appointments in the display_text_area.
@@ -997,42 +1064,98 @@ public class ClinicManagerController {
      */
     @FXML
     private void processImagingAppointment(ActionEvent actionEvent) {
-        TextField firstNameField = imaging_patient_first_name;
-        TextField lastNameField = imaging_patient_last_name;
-        DatePicker appointmentDatePicker = imaging_appointment_date;
-        DatePicker dobPicker = imaging_date_of_birth;
-        ComboBox<String> timeslotSelection = imaging_timeslot_selection;
+        ImagingAppointmentData data = gatherImagingAppointmentData();
+        if (data == null) {
+            imaging_status_messages.appendText("Fill all fields");
+            return;
+        }
 
-        String firstName = firstNameField.getText();
-        String lastName = lastNameField.getText();
-        LocalDate appointmentDateLocal = appointmentDatePicker.getValue();
-        String timeslotStr = timeslotSelection.getValue();
-        LocalDate dobLocal = dobPicker.getValue();
+        if (!validateImagingAppointmentData(data)) return;
 
-        // Retrieve the selected imaging service
+        handleImagingAppointment(data.firstName, data.lastName, data.appointmentDate, data.timeslot, data.dob, data.imagingService);
+    }
+
+    /**
+     * Gathers input data for the imaging appointment.
+     *
+     * @return an ImagingAppointmentData object containing the input data, or null if any field is missing
+     */
+    private ImagingAppointmentData gatherImagingAppointmentData() {
+        String firstName = imaging_patient_first_name.getText();
+        String lastName = imaging_patient_last_name.getText();
+        LocalDate appointmentDateLocal = imaging_appointment_date.getValue();
+        String timeslotStr = imaging_timeslot_selection.getValue();
+        LocalDate dobLocal = imaging_date_of_birth.getValue();
+
         RadioButton selectedImagingButton = (RadioButton) imagingGroup.getSelectedToggle();
         String imagingService = (selectedImagingButton != null) ? selectedImagingButton.getText() : null;
 
         Date appointmentDate = convertToDate(appointmentDateLocal);
         Date dob = convertToDate(dobLocal);
 
-        if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
-                appointmentDateLocal == null || dobLocal == null || timeslotStr == null || imagingService == null) {
-            imaging_status_messages.appendText("Fill all fields");
-            return;
+        if (isAnyFieldEmptyImage(firstName, lastName, appointmentDateLocal, dobLocal, timeslotStr, imagingService)) {
+            return null;
         }
 
-        try {
-            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate), imaging_status_messages);
-            Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
-            dob = validateDateOfBirth(String.valueOf(dob), imaging_status_messages);
+        return new ImagingAppointmentData(firstName, lastName, appointmentDate, dob, timeslotStr, imagingService);
+    }
 
-            if (!validateInputs(appointmentDate, timeslot, dob)) return;
-            handleImagingAppointment(firstName, lastName, appointmentDate, timeslot, dob, imagingService);
+    /**
+     * Validates imaging appointment data and checks if the inputs are valid.
+     *
+     * @param data the ImagingAppointmentData object containing the data to validate
+     * @return true if data is valid, false otherwise
+     */
+    private boolean validateImagingAppointmentData(ImagingAppointmentData data) {
+        try {
+            data.appointmentDate = validateAppointmentDate(String.valueOf(data.appointmentDate), imaging_status_messages);
+            data.timeslot = validateTimeslot(convertTimeToSlot(data.timeslotStr));
+            data.dob = validateDateOfBirth(String.valueOf(data.dob), imaging_status_messages);
+
+            return validateInputs(data.appointmentDate, data.timeslot, data.dob);
         } catch (Exception e) {
             imaging_status_messages.appendText("An error occurred while processing the appointment.");
+            return false;
         }
     }
+
+    /**
+     * Checks if any of the provided fields are empty or null.
+     *
+     * @param fields the fields to check
+     * @return true if any field is empty or null, false otherwise
+     */
+    private boolean isAnyFieldEmptyImage(Object... fields) {
+        for (Object field : fields) {
+            if (field == null || field.toString().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Data class to hold imaging appointment details.
+     */
+    private static class ImagingAppointmentData {
+        String firstName;
+        String lastName;
+        Date appointmentDate;
+        Date dob;
+        String timeslotStr;
+        String imagingService;
+        Timeslot timeslot;
+
+        ImagingAppointmentData(String firstName, String lastName, Date appointmentDate, Date dob, String timeslotStr, String imagingService) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.appointmentDate = appointmentDate;
+            this.dob = dob;
+            this.timeslotStr = timeslotStr;
+            this.imagingService = imagingService;
+        }
+    }
+
 
     /**
      * Validates the imaging service.
@@ -1079,6 +1202,13 @@ public class ClinicManagerController {
         createNewImagingAppointment(firstName, lastName, dob, appointmentDate, timeslot, technician, room, imagingService);
     }
 
+    /**
+     * Returns the appropriate Radiology room based on the specified imaging service.
+     *
+     * @param imagingService The type of imaging service requested.
+     * @return The corresponding Radiology room.
+     * @throws IllegalArgumentException if the imaging service is invalid.
+     */
     private Radiology getRadiologyRoom(String imagingService) {
         switch (imagingService) {
             case "XRAY":
@@ -1162,41 +1292,83 @@ public class ClinicManagerController {
      * @param actionEvent The ActionEvent triggered by the reschedule button.
      */
     @FXML
-    private void processReschedule(ActionEvent actionEvent){
-        TextField firstNameField = re_patient_first_name;
-        TextField lastNameField = re_patient_last_name;
-        DatePicker appointmentDatePicker = re_appointment_date;
-        DatePicker dobPicker =  re_date_of_birth;
-        ComboBox<String> oldtimeslotSelection = re_timeslot_selection;
-        ComboBox<String> newtimeslotSelection = re_newtimeslot_selection;
-
-        String firstName = firstNameField.getText();
-        String lastName = lastNameField.getText();
-        LocalDate appointmentDateLocal = appointmentDatePicker.getValue();
-        String oldTimeslotStr = oldtimeslotSelection.getValue();
-        String newTimeslotStr = newtimeslotSelection.getValue();
-        LocalDate dobLocal = dobPicker.getValue();
-
-        Date appointmentDate = convertToDate(appointmentDateLocal);
-        Date dob = convertToDate(dobLocal);
-
-        if (firstName == null || firstName.isEmpty() ||
-                lastName == null || lastName.isEmpty() ||
-                appointmentDateLocal == null || dobLocal == null ||
-                oldTimeslotStr == null || newTimeslotStr == null) {
+    private void processReschedule(ActionEvent actionEvent) {
+        RescheduleData data = gatherRescheduleData();
+        if (data == null) {
             re_status_messages.appendText("Fill all fields\n");
             return;
         }
 
         try {
-            Timeslot oldSlot = validateTimeslot(convertTimeToSlot(oldTimeslotStr));
-            Timeslot newSlot = validateTimeslot(convertTimeToSlot(newTimeslotStr));
-            if (!validateInputs(appointmentDate, oldSlot, dob, newSlot)) return;
-
-            handleRescheduling(firstName, lastName, appointmentDate, oldSlot, dob, newSlot);
+            if (!validateRescheduleInputs(data)) return;
+            handleRescheduling(data.firstName, data.lastName, data.appointmentDate, data.oldSlot, data.dob, data.newSlot);
         } catch (Exception e) {
+            re_status_messages.appendText("An error occurred while processing the reschedule.\n");
         }
     }
+
+    /**
+     * Gathers input data for the rescheduling.
+     *
+     * @return a RescheduleData object containing the input data, or null if any field is missing
+     */
+    private RescheduleData gatherRescheduleData() {
+        String firstName = re_patient_first_name.getText();
+        String lastName = re_patient_last_name.getText();
+        LocalDate appointmentDateLocal = re_appointment_date.getValue();
+        String oldTimeslotStr = re_timeslot_selection.getValue();
+        String newTimeslotStr = re_newtimeslot_selection.getValue();
+        LocalDate dobLocal = re_date_of_birth.getValue();
+
+        if (firstName == null || firstName.isEmpty() ||
+                lastName == null || lastName.isEmpty() ||
+                appointmentDateLocal == null || dobLocal == null ||
+                oldTimeslotStr == null || newTimeslotStr == null) {
+            return null;
+        }
+
+        Date appointmentDate = convertToDate(appointmentDateLocal);
+        Date dob = convertToDate(dobLocal);
+
+        return new RescheduleData(firstName, lastName, appointmentDate, dob, oldTimeslotStr, newTimeslotStr);
+    }
+
+    /**
+     * Validates and converts rescheduling inputs.
+     *
+     * @param data the RescheduleData object containing the data to validate
+     * @return true if data is valid, false otherwise
+     */
+    private boolean validateRescheduleInputs(RescheduleData data) {
+        data.oldSlot = validateTimeslot(convertTimeToSlot(data.oldTimeslotStr));
+        data.newSlot = validateTimeslot(convertTimeToSlot(data.newTimeslotStr));
+
+        return validateInputs(data.appointmentDate, data.oldSlot, data.dob, data.newSlot);
+    }
+
+    /**
+     * Data class to hold reschedule details.
+     */
+    private static class RescheduleData {
+        String firstName;
+        String lastName;
+        Date appointmentDate;
+        Date dob;
+        String oldTimeslotStr;
+        String newTimeslotStr;
+        Timeslot oldSlot;
+        Timeslot newSlot;
+
+        RescheduleData(String firstName, String lastName, Date appointmentDate, Date dob, String oldTimeslotStr, String newTimeslotStr) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.appointmentDate = appointmentDate;
+            this.dob = dob;
+            this.oldTimeslotStr = oldTimeslotStr;
+            this.newTimeslotStr = newTimeslotStr;
+        }
+    }
+
 
     /**
      * Handles the rescheduling of an existing appointment.
@@ -1539,21 +1711,6 @@ public class ClinicManagerController {
     }
 
     /**
-     * Appends a message detailing the office appointment to the status messages area.
-     *
-     * @param appointmentDate     The date of the appointment.
-     * @param timeslot            The timeslot of the appointment.
-     * @param firstName          The first name of the patient.
-     * @param lastName           The last name of the patient.
-     * @param dob                The date of birth of the patient.
-     * @param doctorFirstName     The first name of the doctor.
-     * @param doctorLastName      The last name of the doctor.
-     * @param doctorDob           The date of birth of the doctor.
-     * @param doctorLocation      The location of the doctor.
-     * @param doctorSpecialty     The specialty of the doctor.
-     * @param doctorNpi           The NPI of the doctor.
-     */
-    /**
      * Appends a message detailing the doctor's availability for an office appointment.
      *
      * @param appointmentDate       The date of the appointment.
@@ -1594,15 +1751,32 @@ public class ClinicManagerController {
         status_messages.appendText(message + "\n");
     }
 
+    /**
+     * Appends a message to the status messages area indicating that the specified doctor
+     * is not available for an office appointment at the given timeslot.
+     *
+     * @param appointmentDate  The date of the appointment.
+     * @param timeslot         The timeslot of the appointment.
+     * @param firstName        The first name of the patient.
+     * @param lastName         The last name of the patient.
+     * @param dob              The date of birth of the patient.
+     * @param doctorFirstName  The first name of the doctor.
+     * @param doctorLastName   The last name of the doctor.
+     * @param doctorDob        The date of birth of the doctor.
+     * @param doctorLocation   The location of the doctor.
+     * @param doctorSpecialty  The specialty of the doctor.
+     * @param doctorNpi        The NPI of the doctor.
+     * @param isAvailable      Indicates whether the doctor is available or not.
+     */
     public void  appendToOfficeTextAreaUnav(Date appointmentDate, Timeslot timeslot, String firstName,
                                             String lastName, Date dob, String doctorFirstName,
                                             String doctorLastName, Date doctorDob,
                                             Location doctorLocation, Specialty doctorSpecialty,
                                             String doctorNpi, boolean isAvailable) {
         String message;
-                message = String.format("[%s %s %s, %s[%s, #%s] is not available at slot %s.",
-                        doctorFirstName, doctorLastName, doctorDob, doctorLocation.toString(),
-                        doctorSpecialty.toString(), doctorNpi, timeslot.getSlotIndex());
+        message = String.format("[%s %s %s, %s[%s, #%s] is not available at slot %s.",
+                doctorFirstName, doctorLastName, doctorDob, doctorLocation.toString(),
+                doctorSpecialty.toString(), doctorNpi, timeslot.getSlotIndex());
 
 
         status_messages.appendText(message + "\n");
