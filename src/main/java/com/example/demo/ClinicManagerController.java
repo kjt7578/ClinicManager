@@ -17,6 +17,7 @@ import javafx.collections.ObservableList;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FilterOutputStream;
 import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Scanner;
@@ -185,9 +186,9 @@ public class ClinicManagerController {
     @FXML
     private TextArea re_status_messages;
 
-    private List<Provider> OBSdoctorList = new List<>();
-    private List<Provider> OBStechnicianList = new List<>();
-    private List<String> OBSproviderList = new List<>();
+    private ObservableList<Provider> OBSdoctorList = FXCollections.observableArrayList();
+    private ObservableList<Provider> OBStechnicianList = FXCollections.observableArrayList();
+    private ObservableList<String> OBSproviderList;
     private static final String PROVIDERS_FILE_PATH = "providers.txt";
 
     /**
@@ -202,7 +203,7 @@ public class ClinicManagerController {
         technicianRotationList = new List<>();
         technicianRotationIndex = INITIAL_ROTATION_INDEX;
 
-        OBSproviderList = new List<>();
+        OBSproviderList = FXCollections.observableArrayList();
         loadProviders();
         int MAX_TECHNICIANS = technicianRotationList.size();
         technicianAssigned = new boolean[MAX_TIMESLOTS][MAX_TECHNICIANS];
@@ -248,6 +249,7 @@ public class ClinicManagerController {
                     }
                 }
             }
+
             ObservableList<String> doctorNames = FXCollections.observableArrayList();
             for (Provider doctor : OBSdoctorList) {
                 doctorNames.add(doctor.getProfile().getFname() + " " + doctor.getProfile().getLname() + " (" + doctor.getLocation().name() + ")");
@@ -258,9 +260,11 @@ public class ClinicManagerController {
             for (Provider technician : OBStechnicianList) {
                 technicianNames.add(technician.getProfile().getFname() + " " + technician.getProfile().getLname() + " (" + technician.getLocation().name() + ")");
             }
+
             createTechnicianRotation();
             Sort.provider(providerList);
             displayProviders();
+
         } catch (FileNotFoundException e) {
             appendMessage("Error: " + PROVIDERS_FILE_PATH + " cannot be found.");
         }
@@ -371,16 +375,20 @@ public class ClinicManagerController {
         Date appointmentDate = convertToDate(appointmentDateLocal);
         Date dob = convertToDate(dobLocal);
 
+        System.out.println("D," + appointmentDate + "," + convertTimeToSlot(timeslotStr) + "," +
+                firstName + "," + lastName + "," + dob + "," + convertProvicerToSNPI(providerName));
+
         if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
                 appointmentDate == null || timeslotStr == null || providerName == null || dob == null) {
             appendMessage("Fill all fields");
+            System.out.println("Empty field exists");
             return;
         }
 
         try {
-            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate));
+            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate),status_messages);
             Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
-            dob = validateDateOfBirth(String.valueOf(dob));
+            dob = validateDateOfBirth(String.valueOf(dob),status_messages);
             if (!validateInputs(appointmentDate, timeslot, dob)) return;
             Doctor doctor = getDoctorByNPI(convertProvicerToSNPI(providerName));
             if (doctor == null) return;
@@ -390,6 +398,8 @@ public class ClinicManagerController {
                 appendToOfficeTextArea(
                         appointmentDate, timeslot, firstName, lastName, dob, doctor.getProfile().getFname(), doctor.getProfile().getLname(), doctor.getDateOfBirth(), doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi(), false  // This indicates that the appointment is a duplicate
                 );
+                System.out.printf("%s %s %s has an existing appointment at the same time slot.%n",
+                        firstName, lastName, dob);
                 return;  // Stop further processing since it's a duplicate
             }
 
@@ -398,6 +408,9 @@ public class ClinicManagerController {
                 appendToOfficeTextArea(
                         appointmentDate, timeslot, firstName, lastName, dob, doctor.getProfile().getFname(), doctor.getProfile().getLname(), doctor.getDateOfBirth(), doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi(), false  // This indicates that the doctor is not available
                 );
+                System.out.printf("[%s %s %s, %s[%s, #%s] is not available at slot %s %n",
+                        doctor.getProfile().getFname(), doctor.getProfile().getLname(), doctor.getDateOfBirth(),
+                        doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi(), timeslot.getSlotIndex());
                 return;
             }
 
@@ -405,6 +418,7 @@ public class ClinicManagerController {
             createNewAppointment(firstName, lastName, dob, appointmentDate, timeslot, doctor, true);
 
         } catch (Exception e) {
+            System.out.println("Error: Invalid office appointment command.");
         }
     }
 
@@ -422,27 +436,33 @@ public class ClinicManagerController {
         String timeslotStr = cancel_timeslot_selection.getValue();
         Date appointmentDate = convertToDate(appointmentDateLocal);
         Date dob = convertToDate(dobLocal);
+        System.out.println("C," + appointmentDate + "," + convertTimeToSlot(timeslotStr) + "," +
+                firstName + "," + lastName + "," + dob);
 
         if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
                 appointmentDate == null || timeslotStr == null || dob == null) {
             cancel_status_messages.appendText("Fill all fields");
+            System.out.println("Empty field exists");
             return;
         }
 
         try {
-            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate));
+            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate),cancel_status_messages);
             Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
-            dob = validateDateOfBirth(String.valueOf(dob));
+            dob = validateDateOfBirth(String.valueOf(dob),cancel_status_messages);
             if (!validateInputs(appointmentDate, timeslot, dob)) return;
             Appointment appointmentToCancel = findAppointment(appointmentDate, timeslot, firstName.toLowerCase(), lastName.toLowerCase(), dob);
 
             if (appointmentToCancel != null) {
                 appointmentList.remove(appointmentToCancel);
+                System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment has been canceled.");
                 cancel_status_messages.appendText(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment has been canceled.\n");
             } else {
+                System.out.println(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment does not exist.");
                 cancel_status_messages.appendText(appointmentDate + " " + timeslot + " " + firstName + " " + lastName + " " + dob + " - appointment does not exist.\n");
             }
         } catch (Exception e) {
+            System.out.println("Error: Invalid cancellation command.");
             cancel_status_messages.appendText("Error: Invalid cancellation command.\n");
         }
     }
@@ -510,6 +530,7 @@ public class ClinicManagerController {
      */
     private String convertTimeToSlot(String timeslot) {
         if (timeslot == null) {
+            System.out.println("Error: timeslot is null.");
             return null;
         }
         switch (timeslot) {
@@ -593,6 +614,7 @@ public class ClinicManagerController {
      * @param command      the command string containing the sorting operation to perform
      */
     private void processSortingCommand(List<Appointment> appointments, String command) {
+        System.out.println(command);
         switch (command) {
             case "PA": // Sort by appointment date, time, then provider's last name
                 Sort.appointment(appointments, 'A');
@@ -616,6 +638,7 @@ public class ClinicManagerController {
                 Sort.appointment(appointments, 'C');
                 break;
             default:
+                System.out.println("Invalid command!");
                 break;
         }
     }
@@ -662,7 +685,9 @@ public class ClinicManagerController {
                     appendToDisplayTextArea("Invalid display option selected.");
                     return;
             }
+
             processSortingCommand(appointmentList, command);
+            System.out.println("Command: " + command);
         } else {
             appendToDisplayTextArea("Please select a display option.");
         }
@@ -705,12 +730,18 @@ public class ClinicManagerController {
      */
     private void printTechnicianRotation(){
         if (technicianRotationList.isEmpty()) {
+            System.out.println("No technicians found for rotation.");
         } else {
+            System.out.println("\nRotation list for the technicians:");
             for (int i = 0; i < technicianRotationList.size(); i++) {
                 Technician technician = technicianRotationList.get(i);
+                System.out.print(technician.getProfile().getFname() + " " + technician.getProfile().getLname()
+                        + " (" + technician.getLocation().name() + ")");
                 if (i < technicianRotationList.size() - 1) {
+                    System.out.print(" --> ");
                 }
             }
+            System.out.println();
         }
     }
 
@@ -719,10 +750,18 @@ public class ClinicManagerController {
      * profiles, locations, and additional information specific to their type.
      */
     private void displayProviders() {
+        System.out.println("Providers loaded to the list.");
+
         for (Provider provider : providerList) {
+            System.out.print("[" + provider.getProfile().toString() + ", ");
+            System.out.print(provider.getLocation().toString());
+
             if (provider instanceof Doctor doctor) {
+                System.out.print("[" + doctor.getSpecialty() + ", #" + doctor.getNpi());
             } else if (provider instanceof Technician technician) {
+                System.out.print("[rate: $" + String.format("%.2f", (double) technician.getRatePerVisit()));
             }
+            System.out.println("]");
         }
     }
 
@@ -762,6 +801,7 @@ public class ClinicManagerController {
                 //processReschedule(tokens);
                 break;
             default:
+                System.out.println("Invalid appointment command!");
                 break;
         }
     }
@@ -777,9 +817,9 @@ public class ClinicManagerController {
         if (!validateTokenLength(tokens)) return;
 
         try {
-            Date appointmentDate = validateAppointmentDate(tokens[1]);
+            Date appointmentDate = validateAppointmentDate(tokens[1],status_messages);
             Timeslot timeslot = validateTimeslot(tokens[2]);
-            Date dob = validateDateOfBirth(tokens[5]);
+            Date dob = validateDateOfBirth(tokens[5],status_messages);
             if (!validateInputs(appointmentDate, timeslot, dob)) return;
 
             String firstName = tokens[3];
@@ -789,17 +829,23 @@ public class ClinicManagerController {
 
             // Check for duplicate appointment
             if (isDuplicateAppointment(firstName, lastName, dob, appointmentDate, timeslot)) {
+                System.out.printf("%s %s %s has an existing appointment at the same time slot.%n",
+                        firstName, lastName, dob);
                 return;  // Stop further processing since it's a duplicate
             }
 
             // Check if the doctor is unavailable at the given time
             if (isDoctorUnavailable(doctor, appointmentDate, timeslot)) {
+                System.out.printf("[%s %s %s, %s[%s, #%s] is not available at slot %s %n",
+                        doctor.getProfile().getFname(), doctor.getProfile().getLname(), doctor.getDateOfBirth(),
+                        doctor.getLocation(), doctor.getSpecialty(), doctor.getNpi(), timeslot.getSlotIndex());
                 return;
             }
 
             // Create the new appointment and add it to the appointment list
             createNewAppointment(firstName, lastName, dob, appointmentDate, timeslot, doctor, true);
         } catch (Exception e) {
+            System.out.println("Error: Invalid office appointment command.");
         }
     }
 
@@ -811,6 +857,7 @@ public class ClinicManagerController {
      */
     private boolean validateTokenLength(String[] tokens) {
         if (tokens.length != TOKEN_LENGTH_APPOINTMENT) {
+            System.out.println("Missing data tokens.");
             return false;
         }
         return true;
@@ -839,9 +886,11 @@ public class ClinicManagerController {
             int npi = Integer.parseInt(npiStr);
             Doctor doctor = findDoctorByNPI(npi);
             if (doctor == null) {
+                System.out.println(npiStr + " - provider doesn't exist.");
             }
             return doctor;
         } catch (NumberFormatException e) {
+            System.out.println(npiStr + " - provider doesn't exist.");
             return null;
         }
     }
@@ -869,8 +918,17 @@ public class ClinicManagerController {
                     doctor.getProfile().getFname(), doctor.getProfile().getLname(),
                     doctor.getProfile().getDob(), doctor.getLocation(),
                     doctor.getSpecialty(), doctor.getNpi(), true); // Pass true for availability
+            System.out.printf("%s %s %s %s %s [%s %s %s, %s[%s, #%s] booked.%n",
+                    appointmentDate, timeslot, firstName, lastName, dob,
+                    doctor.getProfile().getFname(), doctor.getProfile().getLname(),
+                    doctor.getProfile().getDob(), doctor.getLocation(),
+                    doctor.getSpecialty(), doctor.getNpi());
         } else {
             // If the doctor was not available
+            System.out.printf("[%s %s %s, %s[%s, #%s] is not available at slot %s.%n",
+                    doctor.getProfile().getFname(), doctor.getProfile().getLname(),
+                    doctor.getProfile().getDob(), doctor.getLocation(),
+                    doctor.getSpecialty(), doctor.getNpi(), timeslot.getSlotIndex());
         }
     }
 
@@ -949,18 +1007,25 @@ public class ClinicManagerController {
         Date appointmentDate = convertToDate(appointmentDateLocal);
         Date dob = convertToDate(dobLocal);
 
+        System.out.println("T," + appointmentDate + "," + convertTimeToSlot(timeslotStr) + "," +
+                firstName + "," + lastName + "," + dob + "," + imagingService);
+
         if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
                 appointmentDateLocal == null || dobLocal == null || timeslotStr == null || imagingService == null) {
             imaging_status_messages.appendText("Fill all fields");
+            System.out.println("Empty field exists");
             return;
         }
 
         try {
+            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate),imaging_status_messages);
             Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
+            dob = validateDateOfBirth(String.valueOf(dob),imaging_status_messages);
 
             if (!validateInputs(appointmentDate, timeslot, dob)) return;
             handleImagingAppointment(firstName,lastName, appointmentDate, timeslot, dob, imagingService);
         } catch (Exception e) {
+            System.out.println("Error: Invalid imaging appointment command.");
         }
     }
 
@@ -972,6 +1037,7 @@ public class ClinicManagerController {
      */
     private boolean validateImagingService(String imagingService) {
         if (!isValidImagingService(imagingService)) {
+            System.out.printf("%s - imaging service not provided.%n", imagingService.toLowerCase());
             return false;
         }
         return true;
@@ -995,6 +1061,7 @@ public class ClinicManagerController {
             appendToImagingTextArea(
                     appointmentDate, timeslot, firstName, lastName, dob, null, null, null, null, 0.0, imagingService
             );
+            System.out.printf("%s %s %s has an existing appointment at the same time slot.%n", firstName, lastName, dob);
             return;
         }
 
@@ -1003,6 +1070,7 @@ public class ClinicManagerController {
             appendToImagingTextAreaNoTech(
                     appointmentDate, timeslot, firstName, lastName, dob, null, null, null, null, 0.0, imagingService
             );
+            System.out.printf("Cannot find an available technician at all locations for %s at slot %d.%n", room, timeslot.getSlotIndex());
             return;
         }
 
@@ -1026,8 +1094,13 @@ public class ClinicManagerController {
         Imaging newImaging = new Imaging(appointmentDate, timeslot, new Patient(new Profile(firstName, lastName, dob)), technician, room);
         appointmentList.add(newImaging);
 
+
         appendToImagingTextArea(appointmentDate, timeslot, firstName, lastName, dob, technician.getProfile().getFname(), technician.getProfile().getLname(),
                 technician.getProfile().getDob(), technician.getLocation(), (double) technician.getRatePerVisit(), imagingService);
+
+        System.out.printf("%s %s %s %s %s [%s %s %s, %s][rate: $%.2f][%s] booked.%n",
+                appointmentDate.toString(), timeslot.toString(), firstName, lastName, dob, technician.getProfile().getFname(),
+                technician.getProfile().getLname(), technician.getProfile().getDob(), technician.getLocation(), (double) technician.getRatePerVisit(), imagingService);
     }
 
 
@@ -1103,6 +1176,10 @@ public class ClinicManagerController {
             re_status_messages.appendText("Fill all fields\n");
             return;
         }
+
+        System.out.println("R," + appointmentDate + "," + convertTimeToSlot(oldTimeslotStr) + "," +
+                firstName + "," + lastName + "," + dob + "," + convertTimeToSlot(newTimeslotStr));
+
         try {
             Timeslot oldSlot = validateTimeslot(convertTimeToSlot(oldTimeslotStr));
             Timeslot newSlot = validateTimeslot(convertTimeToSlot(newTimeslotStr));
@@ -1110,6 +1187,7 @@ public class ClinicManagerController {
 
             handleRescheduling(firstName, lastName, appointmentDate, oldSlot, dob, newSlot);
         } catch (Exception e) {
+            System.out.println("Missing data tokens.");
         }
     }
 
@@ -1130,6 +1208,7 @@ public class ClinicManagerController {
         if (appointmentToReschedule == null) {
             String message = String.format("%s %s %s %s %s does not exist.%n",
                     appointmentDate.toString(), oldSlot, firstName, lastName, dob);
+            System.out.printf(message);
             re_status_messages.appendText(message);
             return;
         }
@@ -1138,6 +1217,7 @@ public class ClinicManagerController {
         if (isDuplicateAppointment(firstName, lastName, dob, appointmentDate, newSlot)) {
             String message = String.format("%s %s %s has an existing appointment at %s %s.%n",
                     firstName, lastName, dob, appointmentDate, newSlot);
+            System.out.printf(message);
             re_status_messages.appendText(message);
             return;
         }
@@ -1162,6 +1242,10 @@ public class ClinicManagerController {
         String message = String.format("Rescheduled to %s %s %s %s %s %s%n",
                 appointmentDate.toString(), newSlot, firstName, lastName, dob, appointmentToReschedule.getProvider().toString());
 
+        // Print to terminal
+        System.out.printf(message);
+
+        // Append to the status messages TextArea
         re_status_messages.appendText(message);
     }
 
@@ -1184,22 +1268,38 @@ public class ClinicManagerController {
      * @param appointmentDateStr the string representation of the appointment date to validate
      * @return a valid Date object if the appointment date is valid, or null if invalid
      */
-    private Date validateAppointmentDate(String appointmentDateStr) {
+    private Date validateAppointmentDate(String appointmentDateStr, TextArea outputTextArea) {
         Date appointmentDate = parseDate(appointmentDateStr);
         if (appointmentDate == null || !appointmentDate.isValid()) {
+            String message = String.format("Appointment date: %s is not a valid calendar date%n", appointmentDateStr);
+            appendToTextArea(outputTextArea, message);
             return null;
         }
         if (appointmentDate.equals(getToday()) || isBeforeToday(appointmentDate)) {
+            String message = String.format("Appointment date: %s is today or a date before today.%n", appointmentDateStr);
+            appendToTextArea(outputTextArea, message);
             return null;
         }
         if (isWeekend(appointmentDate)) {
+            String message = String.format("Appointment date: %s is Saturday or Sunday.%n", appointmentDateStr);
+            appendToTextArea(outputTextArea, message);
             return null;
         }
         if (isBeyondSixMonths(appointmentDate)) {
+            String message = String.format("Appointment date: %s is not within six months.%n", appointmentDateStr);
+            appendToTextArea(outputTextArea, message);
             return null;
         }
         return appointmentDate;
     }
+
+    private void appendToTextArea(TextArea textArea, String text) {
+        if (textArea != null) {
+            textArea.appendText(text + "\n");
+        }
+    }
+
+
 
     /**
      * Validates the provided timeslot input and returns the corresponding Timeslot object.
@@ -1211,6 +1311,7 @@ public class ClinicManagerController {
         try {
             return Timeslot.fromString(timeslotInput);
         } catch (IllegalArgumentException e) {
+            System.out.println(timeslotInput + " is not a valid time slot.");
             return null;
         }
     }
@@ -1221,16 +1322,21 @@ public class ClinicManagerController {
      * @param dobStr the string representation of the date of birth to validate
      * @return the corresponding Date object if valid, or null if invalid
      */
-    private Date validateDateOfBirth(String dobStr) {
+    private Date validateDateOfBirth(String dobStr, TextArea outputTextArea) {
         Date dob = parseDate(dobStr);
         if (dob == null || !dob.isValid()) {
+            String message = "Patient dob: " + dobStr + " is not a valid calendar date";
+            appendToTextArea(outputTextArea, message);
             return null;
         }
         if (dob.equals(getToday()) || isFutureDate(dob)) {
+            String message = "Patient dob: " + dobStr + " is today or a date after today.";
+            appendToTextArea(outputTextArea, message);
             return null;
         }
         return dob;
     }
+
 
     /**
      * Retrieves the current date.
@@ -1303,6 +1409,7 @@ public class ClinicManagerController {
             int year = Integer.parseInt(parts[2]);
             return new Date(year, month, day);
         } catch (Exception e) {
+            System.out.println("Error: Invalid date format.");
             return null;
         }
     }
@@ -1333,6 +1440,7 @@ public class ClinicManagerController {
      */
     private Technician findAvailableTechnician(Timeslot timeslot, Radiology room) {
         if (technicianRotationList.isEmpty()) {
+            System.out.println("Error: No technicians available for rotation.");
             return null;
         }
         int technicianCount = technicianRotationList.size();
@@ -1551,8 +1659,8 @@ public class ClinicManagerController {
                                                Location technicianLocation, double technicianRate,
                                                String imagingService) {
         String message;
-                message = String.format("Cannot find an available technician for imaging service %s at slot %s.",
-                        imagingService, timeslot.getSlotIndex());
+        message = String.format("Cannot find an available technician for imaging service %s at slot %s.",
+                imagingService, timeslot.getSlotIndex());
 
 
         imaging_status_messages.appendText(message + "\n");
