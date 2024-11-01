@@ -48,4 +48,12 @@ public enum Location {
     }
 
 
+    /**
+     * Gets the zip code of the location.
+     *
+     * @return the zip code of the location
+     */
+    public String getZipCode() {
+        return zip;
+    }
 }

@@ -10,6 +10,8 @@ import model.util.Person;
 public abstract class Provider extends Person {
     private Location location;  // Provider's practice location
 
+
+
     /**
      * Constructor to initialize the Provider with profile and location.
      *
