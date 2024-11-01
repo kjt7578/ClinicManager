@@ -6,10 +6,15 @@
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox alignment="CENTER" prefHeight="405.0" prefWidth="741.0" spacing="20.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.demo.ClinicManagerController">
@@ -22,14 +27,58 @@
                 <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="316.0" prefWidth="551.0">
                         <children>
-                            <TextField fx:id="office_patient_first_name" layoutX="17.0" layoutY="96.0" promptText="Enter Patient First Name" />
-                            <DatePicker fx:id="office_date_of_birth" layoutX="17.0" layoutY="166.0" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" />
+                            <GridPane layoutX="-2.0" layoutY="23.0" prefHeight="287.0" prefWidth="200.0">
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                </rowConstraints>
+                                <children>
+                                    <DatePicker fx:id="office_appointment_date" prefHeight="22.0" prefWidth="160.0" promptText="Appointment Date">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </DatePicker>
+                                    <DatePicker fx:id="office_date_of_birth" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" GridPane.rowIndex="4">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </DatePicker>
+                                    <TextField fx:id="office_patient_first_name" promptText="Enter Patient First Name" GridPane.rowIndex="2">
+                                        <GridPane.margin>
+                                            <Insets left="2.0" />
+                                        </GridPane.margin>
+                                    </TextField>
+                                    <ComboBox fx:id="office_provider_selection" prefHeight="26.0" prefWidth="156.0" promptText="Provider" GridPane.rowIndex="5">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </ComboBox>
+                                    <ComboBox fx:id="office_timeslot_selection" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" GridPane.rowIndex="1">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </ComboBox>
+                                    <Button fx:id="office_schedule_button" mnemonicParsing="false" onAction="#handleScheduleOffice" text="Schedule" GridPane.rowIndex="6">
+                                        <GridPane.margin>
+                                            <Insets left="70.0" />
+                                        </GridPane.margin>
+                                    </Button>
+                                    <TextField fx:id="office_patient_last_name" promptText="Enter Patient Last Name" GridPane.rowIndex="3">
+                                        <GridPane.margin>
+                                            <Insets left="2.0" />
+                                        </GridPane.margin>
+                                    </TextField>
+                                </children>
+                            </GridPane>
                             <TextArea fx:id="status_messages" editable="false" layoutX="205.0" layoutY="22.0" prefHeight="258.0" prefWidth="480.0" promptText="Status message" />
-                            <Button fx:id="office_schedule_button" layoutX="66.0" layoutY="258.0" mnemonicParsing="false" onAction="#handleScheduleOffice" text="Schedule" />
-                            <TextField fx:id="office_patient_last_name" layoutX="17.0" layoutY="129.0" promptText="Enter Patient Last Name" />
-                            <DatePicker fx:id="office_appointment_date" layoutX="17.0" layoutY="22.0" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date" />
-                            <ComboBox fx:id="office_timeslot_selection" layoutX="19.0" layoutY="56.0" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" />
-                            <ComboBox fx:id="office_provider_selection" layoutX="19.0" layoutY="205.0" prefHeight="26.0" prefWidth="156.0" promptText="Provider" />
                         </children>
                     </AnchorPane>
                 </content>
@@ -38,14 +87,58 @@
                 <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="316.0" prefWidth="551.0">
                         <children>
-                            <TextField fx:id="imaging_patient_first_name" layoutX="17.0" layoutY="96.0" promptText="Enter Patient First Name" />
-                            <DatePicker fx:id="imaging_date_of_birth" layoutX="17.0" layoutY="166.0" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" />
+                            <GridPane layoutY="22.0" prefHeight="287.0" prefWidth="200.0">
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                </rowConstraints>
+                                <children>
+                                    <ComboBox fx:id="imaging_timeslot_selection" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" GridPane.rowIndex="1">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </ComboBox>
+                                    <Button fx:id="imaging_schedule_button" mnemonicParsing="false" onAction="#processImagingAppointment" text="Schedule" GridPane.rowIndex="6">
+                                        <GridPane.margin>
+                                            <Insets left="70.0" />
+                                        </GridPane.margin>
+                                    </Button>
+                                    <TextField fx:id="imaging_patient_first_name" promptText="Enter Patient First Name" GridPane.rowIndex="2">
+                                        <GridPane.margin>
+                                            <Insets left="2.0" />
+                                        </GridPane.margin>
+                                    </TextField>
+                                    <DatePicker fx:id="imaging_date_of_birth" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" GridPane.rowIndex="4">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </DatePicker>
+                                    <TextField fx:id="imaging_patient_last_name" promptText="Enter Patient Last Name" GridPane.rowIndex="3">
+                                        <GridPane.margin>
+                                            <Insets left="2.0" />
+                                        </GridPane.margin>
+                                    </TextField>
+                                    <DatePicker fx:id="imaging_appointment_date" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </DatePicker>
+                                    <ComboBox fx:id="imaging_service" prefHeight="26.0" prefWidth="156.0" promptText="Imaging Service" GridPane.rowIndex="5">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </ComboBox>
+                                </children>
+                            </GridPane>
                             <TextArea fx:id="imaging_status_messages" editable="false" layoutX="205.0" layoutY="22.0" prefHeight="258.0" prefWidth="480.0" promptText="Status message" />
-                            <Button fx:id="imaging_schedule_button" layoutX="65.0" layoutY="258.0" mnemonicParsing="false" onAction="#processImagingAppointment" text="Schedule" />
-                            <TextField fx:id="imaging_patient_last_name" layoutX="17.0" layoutY="129.0" promptText="Enter Patient Last Name" />
-                            <DatePicker fx:id="imaging_appointment_date" layoutX="17.0" layoutY="22.0" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date" />
-                            <ComboBox fx:id="imaging_timeslot_selection" layoutX="19.0" layoutY="56.0" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" />
-                     <ComboBox fx:id="imaging_service" layoutX="19.0" layoutY="203.0" prefHeight="26.0" prefWidth="156.0" promptText="Imaging Service" />
                         </children>
                     </AnchorPane>
                 </content>
@@ -54,43 +147,146 @@
                 <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="329.0" prefWidth="421.0">
                         <children>
-                            <TextField fx:id="re_patient_first_name" layoutX="18.0" layoutY="108.0" promptText="Enter Patient First Name" />
-                            <DatePicker fx:id="re_date_of_birth" layoutX="19.0" layoutY="180.0" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" />
                             <TextArea fx:id="re_status_messages" editable="false" layoutX="204.0" layoutY="22.0" prefHeight="260.0" prefWidth="480.0" promptText="Status message" />
-                            <Button fx:id="reschedule_button" layoutX="58.0" layoutY="260.0" mnemonicParsing="false" onAction="#processReschedule" text="Reschedule" />
-                            <TextField fx:id="re_patient_last_name" layoutX="18.0" layoutY="141.0" promptText="Enter Patient Last Name" />
-                            <DatePicker fx:id="re_appointment_date" layoutX="17.0" layoutY="29.0" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date" />
-                            <ComboBox fx:id="re_timeslot_selection" layoutX="18.0" layoutY="65.0" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" />
-                            <ComboBox fx:id="re_newtimeslot_selection" layoutX="18.0" layoutY="215.0" prefHeight="26.0" prefWidth="156.0" promptText="New Timeslot" />
+                            <GridPane layoutY="22.0" prefHeight="287.0" prefWidth="200.0">
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                </rowConstraints>
+                                <children>
+                                    <DatePicker fx:id="re_appointment_date" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </DatePicker>
+                                    <ComboBox fx:id="re_timeslot_selection" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" GridPane.rowIndex="1">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </ComboBox>
+                                    <TextField fx:id="re_patient_first_name" promptText="Enter Patient First Name" GridPane.rowIndex="2">
+                                        <GridPane.margin>
+                                            <Insets left="2.0" />
+                                        </GridPane.margin>
+                                    </TextField>
+                                    <TextField fx:id="re_patient_last_name" promptText="Enter Patient Last Name" GridPane.rowIndex="3">
+                                        <GridPane.margin>
+                                            <Insets left="2.0" />
+                                        </GridPane.margin>
+                                    </TextField>
+                                    <DatePicker fx:id="re_date_of_birth" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" GridPane.rowIndex="4">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </DatePicker>
+                                    <ComboBox fx:id="re_newtimeslot_selection" prefHeight="26.0" prefWidth="156.0" promptText="New Timeslot" GridPane.rowIndex="5">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </ComboBox>
+                                    <Button fx:id="reschedule_button" mnemonicParsing="false" onAction="#processReschedule" text="Reschedule" GridPane.rowIndex="6">
+                                        <GridPane.margin>
+                                            <Insets left="60.0" />
+                                        </GridPane.margin>
+                                    </Button>
+                                </children>
+                            </GridPane>
                         </children>
                     </AnchorPane>
                 </content>
             </Tab>
-         <Tab fx:id="cancel_appointments" text="Cancel Appointments">
-            <content>
-               <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="316.0" prefWidth="551.0">
-                  <children>
-                     <TextField fx:id="cancel_patient_first_name" layoutX="17.0" layoutY="96.0" promptText="Enter Patient First Name" />
-                     <DatePicker fx:id="cancel_date_of_birth" layoutX="17.0" layoutY="166.0" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" />
-                     <TextArea fx:id="cancel_status_messages" editable="false" layoutX="205.0" layoutY="22.0" prefHeight="258.0" prefWidth="480.0" promptText="Status message" />
-                      <Button fx:id="cancel_schedule_button" layoutX="65.0" layoutY="235.0" mnemonicParsing="false" onAction="#processCancellation" text="Cancel" />
-                      <TextField fx:id="cancel_patient_last_name" layoutX="17.0" layoutY="129.0" promptText="Enter Patient Last Name" />
-                     <DatePicker fx:id="cancel_appointment_date" layoutX="17.0" layoutY="22.0" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date" />
-                     <ComboBox fx:id="cancel_timeslot_selection" layoutX="19.0" layoutY="56.0" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" />
-                  </children>
-               </AnchorPane>
-            </content>
-         </Tab>
+            <Tab fx:id="cancel_appointments" text="Cancel Appointments">
+                <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="316.0" prefWidth="551.0">
+                        <children>
+                            <TextArea fx:id="cancel_status_messages" editable="false" layoutX="205.0" layoutY="22.0" prefHeight="258.0" prefWidth="480.0" promptText="Status message" />
+                            <GridPane layoutY="22.0" prefHeight="287.0" prefWidth="200.0">
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                                </rowConstraints>
+                                <children>
+                                    <DatePicker fx:id="cancel_appointment_date" prefHeight="22.0" prefWidth="159.0" promptText="Appointment Date">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </DatePicker>
+                                    <ComboBox fx:id="cancel_timeslot_selection" prefHeight="26.0" prefWidth="156.0" promptText="Timeslot" GridPane.rowIndex="1">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </ComboBox>
+                                    <TextField fx:id="cancel_patient_first_name" promptText="Enter Patient First Name" GridPane.rowIndex="2">
+                                        <GridPane.margin>
+                                            <Insets left="2.0" />
+                                        </GridPane.margin>
+                                    </TextField>
+                                    <TextField fx:id="cancel_patient_last_name" promptText="Enter Patient Last Name" GridPane.rowIndex="3">
+                                        <GridPane.margin>
+                                            <Insets left="2.0" />
+                                        </GridPane.margin>
+                                    </TextField>
+                                    <DatePicker fx:id="cancel_date_of_birth" prefHeight="22.0" prefWidth="159.0" promptText="Date Of Birth" GridPane.rowIndex="4">
+                                        <GridPane.margin>
+                                            <Insets left="20.0" />
+                                        </GridPane.margin>
+                                    </DatePicker>
+                                    <Button fx:id="cancel_schedule_button" mnemonicParsing="false" onAction="#processCancellation" text="Cancel" GridPane.rowIndex="6">
+                                        <GridPane.margin>
+                                            <Insets left="70.0" />
+                                        </GridPane.margin>
+                                    </Button>
+                                </children>
+                            </GridPane>
+                        </children>
+                    </AnchorPane>
+                </content>
+            </Tab>
             <Tab fx:id="display_stuff" text="Display">
                 <content>
                     <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="535.0" prefWidth="417.0">
                         <children>
-                            <ComboBox fx:id="display_selector" layoutX="27.0" layoutY="14.0" onAction="#handleDisplaySelection" prefHeight="26.0" prefWidth="514.0" promptText="Select Display Option" />
+                            <ComboBox fx:id="display_selector" layoutX="27.0" layoutY="14.0" onAction="#handleDisplaySelection" prefHeight="26.0" prefWidth="652.0" promptText="Select Display Option" />
                             <TextArea fx:id="display_text_area" editable="false" layoutX="28.0" layoutY="52.0" prefHeight="257.0" prefWidth="652.0" promptText="Selected display will be displayed here" />
                         </children>
                     </AnchorPane>
                 </content>
             </Tab>
+            <Tab text="Providers">
+                <content>
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                        <children>
+                            <TableView fx:id="providerTable" layoutX="46.0" layoutY="12.0" prefHeight="293.0" prefWidth="610.0">
+                                <columns>
+                                    <TableColumn fx:id="firstNameColumn" prefWidth="116.0" text="First Name" />
+                                    <TableColumn fx:id="lastNameColumn" prefWidth="100.0" text="Last Name" />
+                                    <TableColumn fx:id="dobColumn" prefWidth="106.0" text="Dob" />
+                                    <TableColumn fx:id="townColumn" prefWidth="84.0" text="Town" />
+                                    <TableColumn fx:id="countyColumn" prefWidth="98.0" text="County" />
+                                    <TableColumn fx:id="zipColumn" prefWidth="107.0" text="Zip" />
+                                </columns>
+                            </TableView>
+                        </children>
+                    </AnchorPane>
+                </content>
+            </Tab>
+
         </tabs>
     </TabPane>
     <BorderPane prefHeight="21.0" prefWidth="421.0" />
