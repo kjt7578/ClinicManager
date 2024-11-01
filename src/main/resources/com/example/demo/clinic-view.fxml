@@ -138,9 +138,9 @@
 
                                     <!-- Radio buttons for imaging type with ToggleGroup reference -->
                                     <RadioButton fx:id="XRAY_button" text="XRAY" GridPane.rowIndex="5">
-                              <toggleGroup>
-                                 <ToggleGroup fx:id="imagingGroup" />
-                              </toggleGroup></RadioButton>
+                                        <toggleGroup>
+                                            <ToggleGroup fx:id="imagingGroup" />
+                                        </toggleGroup></RadioButton>
                                     <RadioButton fx:id="CATSCAN_button" text="CATSCAN" toggleGroup="$imagingGroup" GridPane.rowIndex="6" />
                                     <RadioButton fx:id="ULTRASOUND_button" text="ULTRASOUND" toggleGroup="$imagingGroup" GridPane.rowIndex="7" />
 
