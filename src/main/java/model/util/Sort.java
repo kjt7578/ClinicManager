@@ -1,5 +1,6 @@
 package model.util;
 
+import javafx.fxml.FXML;
 import model.project1.Appointment;
 import model.project1.List;
 import model.project1.Provider;
@@ -77,6 +78,7 @@ public class Sort {
         }
     }
 
+
     /**
      * Sorts appointments by patient details and prints a billing statement for each patient.
      *
@@ -116,7 +118,6 @@ public class Sort {
 
         // Print the billing statement
         System.out.println("** Billing statement ordered by patient. **");
-        appendText("** Billing statement ordered by patient. **");
 
         for (int i = 0; i < count; i++) {
             String line = String.format("(%d) %s [due: $%s]", (i + 1), patientNames[i], df.format(totalDueAmounts[i]));
@@ -124,7 +125,6 @@ public class Sort {
             appendText(line);
         }
         System.out.println("** end of list **");
-        appendText("** end of list **");
 
         // Clear the list of appointments after printing
         clearList(list);

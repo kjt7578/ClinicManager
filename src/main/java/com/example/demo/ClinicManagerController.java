@@ -176,6 +176,7 @@ public class ClinicManagerController {
     @FXML
     private DatePicker re_date_of_birth;
 
+
     @FXML
     private ComboBox<String> re_timeslot_selection;
 
@@ -440,7 +441,7 @@ public class ClinicManagerController {
 
         if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
                 appointmentDate == null || timeslotStr == null || dob == null) {
-            appendMessage("Fill all fields");
+            cancel_status_messages.appendText("Fill all fields");
             System.out.println("Empty field exists");
             return;
         }
@@ -649,6 +650,7 @@ public class ClinicManagerController {
      */
     @FXML
     private void handleDisplaySelection() {
+        display_text_area.clear();
         String selectedOption = display_selector.getValue();
         String command = "";
 
@@ -686,7 +688,6 @@ public class ClinicManagerController {
 
             processSortingCommand(appointmentList, command);
             System.out.println("Command: " + command);
-            displayAppointments();
         } else {
             appendToDisplayTextArea("Please select a display option.");
         }
@@ -1011,7 +1012,7 @@ public class ClinicManagerController {
 
         if (firstName == null || firstName.isEmpty() || lastName == null || lastName.isEmpty() ||
                 appointmentDateLocal == null || dobLocal == null || timeslotStr == null || imagingService == null) {
-            appendMessage("Fill all fields");
+            imaging_status_messages.appendText("Fill all fields");
             System.out.println("Empty field exists");
             return;
         }
@@ -1517,7 +1518,9 @@ public class ClinicManagerController {
      * @param text The text to be appended to the display text area.
      */
     public void appendToDisplayTextArea(String text) {
-        display_text_area.appendText(text + "\n");
+        if (display_text_area != null) {
+            display_text_area.appendText(text + "\n");
+        }
     }
 
     /**
