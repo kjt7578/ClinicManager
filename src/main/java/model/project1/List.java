@@ -147,7 +147,7 @@ public class List<E> implements Iterable<E> {
     }
 
     /**
-     * Internal class to implement the iterator for List<E>.
+     * Internal class to implement the iterator for List.
      */
     private class ListIterator implements Iterator<E> {
         private int currentIndex = 0;

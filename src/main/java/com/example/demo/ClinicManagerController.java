@@ -18,7 +18,6 @@ import javafx.collections.ObservableList;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FilterOutputStream;
 import java.time.LocalDate;
 import java.util.Calendar;
 import java.util.Scanner;
@@ -26,7 +25,6 @@ import java.util.Scanner;
 /**
  * The ClinicManagerController class manages the functionality of the clinic's appointment scheduling system.
  * It handles user interactions within the JavaFX interface
- *
  * The class utilizes FXML components for the user interface and contains methods to manipulate
  * appointment lists and display messages to the user.
  *
@@ -208,7 +206,7 @@ public class ClinicManagerController {
     private ObservableList<Provider> OBSdoctorList = FXCollections.observableArrayList();
     private ObservableList<Provider> OBStechnicianList = FXCollections.observableArrayList();
     private ObservableList<Provider> providerData = FXCollections.observableArrayList();
-    private ObservableList<String> OBSproviderList;
+    private ObservableList<Provider> OBSproviderList = FXCollections.observableArrayList();
     private static final String PROVIDERS_FILE_PATH = "providers.txt";
 
     /**
@@ -270,6 +268,9 @@ public class ClinicManagerController {
                 if (!line.isEmpty()) {
                     Provider provider = parseProvider(line);
                     addProviderToLists(provider);
+                    if (provider != null) {
+                        OBSproviderList.add(provider);
+                    }
                 }
             }
         } catch (FileNotFoundException e) {
@@ -382,8 +383,8 @@ public class ClinicManagerController {
      */
     private void initializeTimeSlots() {
         ObservableList<String> timeSlots = FXCollections.observableArrayList();
-        addTimeSlots(timeSlots, 1, 6); // Morning slots
-        addTimeSlots(timeSlots, 7, 12); // Afternoon slots
+        addTimeSlots(timeSlots, Timeslot.MIN_SLOT_INDEX, Timeslot.MORNING_SLOTS_COUNT); // Morning slots
+        addTimeSlots(timeSlots, Timeslot.AFTERNOON_SLOT_START_INDEX, Timeslot.MAX_SLOT_INDEX); // Afternoon slots
         office_timeslot_selection.setItems(timeSlots);
         imaging_timeslot_selection.setItems(timeSlots);
         cancel_timeslot_selection.setItems(timeSlots);
@@ -482,7 +483,7 @@ public class ClinicManagerController {
             data.timeslot = validateTimeslot(convertTimeToSlot(data.timeslotStr));
             data.dob = validateDateOfBirth(String.valueOf(data.dob), status_messages);
             if (!validateInputs(data.appointmentDate, data.timeslot, data.dob)) return false;
-            data.doctor = getDoctorByNPI(convertProvicerToSNPI(data.providerName));
+            data.doctor = getDoctorByNPI(convertProviderToSNPI(data.providerName));
             if (data.doctor == null) return false;
 
             if (isDuplicateAppointment(data.firstName, data.lastName, data.dob, data.appointmentDate, data.timeslot)) {
@@ -604,22 +605,16 @@ public class ClinicManagerController {
      * @param providerName the name of the provider to convert
      * @return the NPI as a string, or null if the provider name is not recognized
      */
-    private String convertProvicerToSNPI(String providerName) {
-        if ("ANDREW PATEL".equals(providerName)) return "01";
-        else if ("RACHAEL LIM".equals(providerName)) return "23";
-        else if ("MONICA ZIMNES".equals(providerName)) return "11";
-        else if ("JOHN HARPER".equals(providerName)) return "32";
-        else if ("TOM KAUR".equals(providerName)) return "54";
-        else if ("ERIC TAYLOR".equals(providerName)) return "91";
-        else if ("BEN RAMESH".equals(providerName)) return "39";
-        else if ("JUSTIN CERAVOLO".equals(providerName)) return "09";
-        else if ("GARY JOHNSON".equals(providerName)) return "85";
-        else if ("BEN JERRY".equals(providerName)) return "77";
-        else if ("FRANK LIN".equals(providerName)) return "120";
-        else if ("CHARLES BROWN".equals(providerName)) return "100";
-        else if ("MONICA FOX".equals(providerName)) return "130";
-        else if ("JENNY PATEL".equals(providerName)) return "125";
-        else return null;
+    private String convertProviderToSNPI(String providerName) {
+        for (Provider provider : OBSproviderList) {
+            if (provider instanceof Doctor doctor) {
+                String fullName = doctor.getProfile().getFname() + " " + doctor.getProfile().getLname();
+                if (fullName.equalsIgnoreCase(providerName)) {
+                    return doctor.getNpi();
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -630,35 +625,28 @@ public class ClinicManagerController {
      * @return the corresponding slot number as a string, or null if the timeslot is unrecognized
      */
     private String convertTimeToSlot(String timeslot) {
-        switch (timeslot) {
-            case "9:00 AM":
-                return "1";
-            case "9:30 AM":
-                return "2";
-            case "10:00 AM":
-                return "3";
-            case "10:30 AM":
-                return "4";
-            case "11:00 AM":
-                return "5";
-            case "11:30 AM":
-                return "6";
-            case "2:00 PM":
-                return "7";
-            case "2:30 PM":
-                return "8";
-            case "3:00 PM":
-                return "9";
-            case "3:30 PM":
-                return "10";
-            case "4:00 PM":
-                return "11";
-            case "4:30 PM":
-                return "12";
-            default:
-                return null;
+        Timeslot slot = null;
+        try {
+            switch (timeslot) {
+                case "9:00 AM" -> slot = new Timeslot(Timeslot.BASE_HOUR_MORNING, 0);
+                case "9:30 AM" -> slot = new Timeslot(Timeslot.BASE_HOUR_MORNING, Timeslot.SLOT_DURATION_MINUTES);
+                case "10:00 AM" -> slot = new Timeslot(Timeslot.BASE_HOUR_MORNING + 1, 0);
+                case "10:30 AM" -> slot = new Timeslot(Timeslot.BASE_HOUR_MORNING + 1, Timeslot.SLOT_DURATION_MINUTES);
+                case "11:00 AM" -> slot = new Timeslot(Timeslot.BASE_HOUR_MORNING + 2, 0);
+                case "11:30 AM" -> slot = new Timeslot(Timeslot.BASE_HOUR_MORNING + 2, Timeslot.SLOT_DURATION_MINUTES);
+                case "2:00 PM" -> slot = new Timeslot(Timeslot.BASE_HOUR_AFTERNOON, 0);
+                case "2:30 PM" -> slot = new Timeslot(Timeslot.BASE_HOUR_AFTERNOON, Timeslot.SLOT_DURATION_MINUTES);
+                case "3:00 PM" -> slot = new Timeslot(Timeslot.BASE_HOUR_AFTERNOON + 1, 0);
+                case "3:30 PM" -> slot = new Timeslot(Timeslot.BASE_HOUR_AFTERNOON + 1, Timeslot.SLOT_DURATION_MINUTES);
+                case "4:00 PM" -> slot = new Timeslot(Timeslot.BASE_HOUR_AFTERNOON + 2, 0);
+                case "4:30 PM" -> slot = new Timeslot(Timeslot.BASE_HOUR_AFTERNOON + 2, Timeslot.SLOT_DURATION_MINUTES);
+            }
+            return String.valueOf(slot.getSlotIndex());
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
+
 
     /**
      * Clears input fields in the UI based on the specified appointment type.
@@ -833,7 +821,7 @@ public class ClinicManagerController {
                 appendToTextArea(status_messages, message);
             }
         }
-        appendToTextArea(status_messages, "");  // 빈 줄 추가
+        appendToTextArea(status_messages, "");
     }
 
 

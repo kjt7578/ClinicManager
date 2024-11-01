@@ -11,14 +11,14 @@ public class Timeslot implements Comparable<Timeslot> {
     private int hour;
     private int minute;
 
-    private static final int BASE_HOUR_MORNING = 9;  // 9:00 AM
-    private static final int BASE_HOUR_AFTERNOON = 14;  // 2:00 PM
-    private static final int SLOT_DURATION_MINUTES = 30;  // Slot duration in minutes
-    private static final int MORNING_END_HOUR = 12;  // Noon time for morning ending
-    private static final int MORNING_SLOTS_COUNT = 6;  // Number of slots in the morning
-    private static final int AFTERNOON_SLOT_START_INDEX = 7;  // Afternoon slot index starts at 7
-    private static final int MINUTES_PER_HOUR = 60;  // Minutes in one hour
-    private static final int TWELVE_HOUR_CLOCK = 12;  // 12-hour format
+    public static final int BASE_HOUR_MORNING = 9;  // 9:00 AM
+    public static final int BASE_HOUR_AFTERNOON = 14;  // 2:00 PM
+    public static final int SLOT_DURATION_MINUTES = 30;  // Slot duration in minutes
+    public static final int MORNING_END_HOUR = 12;  // Noon time for morning ending
+    public static final int MORNING_SLOTS_COUNT = 6;  // Number of slots in the morning
+    public static final int AFTERNOON_SLOT_START_INDEX = 7;  // Afternoon slot index starts at 7
+    public static final int MINUTES_PER_HOUR = 60;  // Minutes in one hour
+    public static final int TWELVE_HOUR_CLOCK = 12;  // 12-hour format
     public static final int MIN_SLOT_INDEX = 1;
     public static final int MAX_SLOT_INDEX = 12;
     public static final int ZERO_INDEX = 0;

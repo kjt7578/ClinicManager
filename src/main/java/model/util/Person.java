@@ -10,6 +10,9 @@ import model.project1.Profile;
  * @author Jeongtae Kim and Stephen Kwok
  */
 public class Person implements Comparable<Person>{
+    /**
+     * The profile of the person.
+     */
     protected Profile profile;
 
     /**

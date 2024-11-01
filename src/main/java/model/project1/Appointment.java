@@ -9,9 +9,24 @@ import model.util.Person;
  * @author Stephen Kwok and Jeongtae Kim
  */
 public class Appointment implements Comparable<Appointment> {
+    /**
+     * The date of the appointment.
+     */
     protected Date date;
+
+    /**
+     * The timeslot of the appointment.
+     */
     protected Timeslot timeslot;
+
+    /**
+     * The patient involved in the appointment.
+     */
     protected Person patient;
+
+    /**
+     * The provider involved in the appointment.
+     */
     protected Person provider;
 
     /**
