@@ -550,7 +550,6 @@ public class ClinicManagerController {
      * Processes the cancellation of an appointment by gathering input data,
      * validating fields, and finding the matching appointment in the list.
      */
-    //C,2/3/2025,4,john,doe,12/13/1989
     @FXML
     private void processCancellation() {
         String firstName = cancel_patient_first_name.getText();
