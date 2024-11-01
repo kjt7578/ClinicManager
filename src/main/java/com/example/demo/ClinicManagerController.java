@@ -142,7 +142,16 @@ public class ClinicManagerController {
     private ComboBox<String> imaging_timeslot_selection;
 
     @FXML
-    private ComboBox<String> imaging_service;
+    private RadioButton XRAY_button;
+
+    @FXML
+    private RadioButton CATSCAN_button;
+
+    @FXML
+    private RadioButton ULTRASOUND_button;
+
+    @FXML
+    private ToggleGroup imagingGroup;
 
     @FXML
     private ComboBox<String> display_selector;
@@ -221,6 +230,10 @@ public class ClinicManagerController {
         countyColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getLocation().getCounty()));
         zipColumn.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getLocation().getZipCode()));
 
+        imagingGroup = new ToggleGroup();
+        XRAY_button.setToggleGroup(imagingGroup);
+        CATSCAN_button.setToggleGroup(imagingGroup);
+        ULTRASOUND_button.setToggleGroup(imagingGroup);
 
         printTechnicianRotation();
         appointmentList = new List<>();
@@ -238,8 +251,6 @@ public class ClinicManagerController {
                 "PC: Display Credit by Provider"
         );
         display_selector.setItems(displayOptions);
-        ObservableList<String> imagingServices = FXCollections.observableArrayList("XRAY", "CATSCAN", "ULTRASOUND");
-        imaging_service.setItems(imagingServices);
     }
 
     /**
@@ -989,16 +1000,18 @@ public class ClinicManagerController {
         TextField firstNameField = imaging_patient_first_name;
         TextField lastNameField = imaging_patient_last_name;
         DatePicker appointmentDatePicker = imaging_appointment_date;
-        DatePicker dobPicker =  imaging_date_of_birth;
+        DatePicker dobPicker = imaging_date_of_birth;
         ComboBox<String> timeslotSelection = imaging_timeslot_selection;
-        ComboBox<String> imagingSelection = imaging_service;
 
         String firstName = firstNameField.getText();
         String lastName = lastNameField.getText();
         LocalDate appointmentDateLocal = appointmentDatePicker.getValue();
         String timeslotStr = timeslotSelection.getValue();
-        String imagingService = imagingSelection.getValue();
         LocalDate dobLocal = dobPicker.getValue();
+
+        // Retrieve the selected imaging service
+        RadioButton selectedImagingButton = (RadioButton) imagingGroup.getSelectedToggle();
+        String imagingService = (selectedImagingButton != null) ? selectedImagingButton.getText() : null;
 
         Date appointmentDate = convertToDate(appointmentDateLocal);
         Date dob = convertToDate(dobLocal);
@@ -1010,13 +1023,14 @@ public class ClinicManagerController {
         }
 
         try {
-            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate),imaging_status_messages);
+            appointmentDate = validateAppointmentDate(String.valueOf(appointmentDate), imaging_status_messages);
             Timeslot timeslot = validateTimeslot(convertTimeToSlot(timeslotStr));
-            dob = validateDateOfBirth(String.valueOf(dob),imaging_status_messages);
+            dob = validateDateOfBirth(String.valueOf(dob), imaging_status_messages);
 
             if (!validateInputs(appointmentDate, timeslot, dob)) return;
-            handleImagingAppointment(firstName,lastName, appointmentDate, timeslot, dob, imagingService);
+            handleImagingAppointment(firstName, lastName, appointmentDate, timeslot, dob, imagingService);
         } catch (Exception e) {
+            imaging_status_messages.appendText("An error occurred while processing the appointment.");
         }
     }
 
@@ -1044,7 +1058,7 @@ public class ClinicManagerController {
      * @param imagingService    The type of imaging service requested.
      */
     private void handleImagingAppointment(String firstName, String lastName, Date appointmentDate, Timeslot timeslot, Date dob, String imagingService) {
-        Radiology room = Radiology.valueOf(imagingService);
+        Radiology room = getRadiologyRoom(imagingService);
 
         // Check for duplicate imaging appointment
         if (isDuplicateImagingAppointment(firstName, lastName, dob, appointmentDate, timeslot)) {
@@ -1063,6 +1077,19 @@ public class ClinicManagerController {
         }
 
         createNewImagingAppointment(firstName, lastName, dob, appointmentDate, timeslot, technician, room, imagingService);
+    }
+
+    private Radiology getRadiologyRoom(String imagingService) {
+        switch (imagingService) {
+            case "XRAY":
+                return Radiology.XRAY;
+            case "CATSCAN":
+                return Radiology.CATSCAN;
+            case "ULTRASOUND":
+                return Radiology.ULTRASOUND;
+            default:
+                throw new IllegalArgumentException("Invalid imaging service: " + imagingService);
+        }
     }
 
     /**
